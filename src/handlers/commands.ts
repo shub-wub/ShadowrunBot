@@ -2,7 +2,7 @@ import { Client, Routes, SlashCommandBuilder } from "discord.js";
 import { REST } from "@discordjs/rest"
 import { readdirSync } from "fs";
 import { join } from "path";
-import { color } from "../functions";
+import { color } from "../utilities";
 import { SlashCommand } from "../types";
 const { token, clientId, guildId } = process.env;
 
@@ -16,8 +16,8 @@ module.exports = (client: Client) => {
     readdirSync(slashCommandsDir).forEach(file => {
         if (!file.endsWith(".js")) return;
         let command : SlashCommand = require(`${slashCommandsDir}/${file}`).default;
-        commands.set(command.commandBuilder.name, command);
-        commandArray.push(command.commandBuilder.toJSON());
+        commands.set(command.data.name, command);
+        commandArray.push(command.data.toJSON());
     });
 
     const rest = new REST({version: "10"}).setToken(token);

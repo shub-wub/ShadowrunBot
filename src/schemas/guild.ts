@@ -1,13 +1,12 @@
 import { Schema, model } from "mongoose";
 import { IGuild } from "../types";
 
-const GuildSchema = new Schema<IGuild>({
-    guildID: {required:true, type: String},
-    options: {
-        prefix: {type: String, default: process.env.PREFIX}
-    }
+const guildSchema = new Schema<IGuild>({
+    guildId: { type : String , unique : true, required : true },
+    rankedCategoryId: { type : String , unique : true, required : true },
+    queueChannelId: { type : String , unique : true, required : true },
+    matchChannelId: { type : String , unique : true, required : true },
+    leaderboardChannelId: { type : String , unique : true, required : true }
 })
 
-const GuildModel = model("guild", GuildSchema)
-
-export default GuildModel
+export default model("guild", guildSchema, "guilds");

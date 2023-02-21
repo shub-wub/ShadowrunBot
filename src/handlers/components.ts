@@ -1,6 +1,7 @@
 import { readdirSync } from 'fs';
 import { Client } from "discord.js";
 import { join } from 'path';
+import { Button, Modal, SelectMenu } from 'src/types';
 
 module.exports = (client: Client) => {
 
@@ -16,15 +17,16 @@ module.exports = (client: Client) => {
 
             switch (folder) {
                 case "buttons":
-                    const button = require(`../../components/${folder}/${file}`);
+                    const button: Button = require(`../components/${folder}/${file}`).default;
                     buttons.set(button.data.name, button);
                     break;
                 case "selectMenus":
-                    const menu = require(`../../components/${folder}/${file}`);
+                    const menu: SelectMenu = require(`../components/${folder}/${file}`).default;
                     selectMenus.set(menu.data.name, menu);
                     break;
                 case "modals":
-                    const modal = require(`../../components/${folder}/${file}`);
+                    const modal: Modal = require(`../components/${folder}/${file}`).default;
+                    console.log("modal " + JSON.stringify(modal));
                     modals.set(modal.data.name, modal);
                     break;
                 default:

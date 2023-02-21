@@ -12,9 +12,8 @@ const playerSchema = new Schema<IPlayer>({
     deaths: Number,
     resurrects: Number,
     bonusTotal: Number,
-    friendlyFire: Number
+    friendlyFire: Number,
+    isBanned: Boolean
 });
 
-const PlayerModel = model("Player", playerSchema, "players");
-
-export default PlayerModel;
+export default model("Player", playerSchema, "players");

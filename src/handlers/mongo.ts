@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { color } from "../functions";
+import { color } from "../utilities";
 const { databaseToken } = process.env;
 
 module.exports = () => {

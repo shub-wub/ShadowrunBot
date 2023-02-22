@@ -16,7 +16,6 @@ export const getEmbedByMessageId = (messageId: string): Promise<IEmbed> => {
 export const createEmbed = (embed: IEmbed): Promise<IEmbed> => {
     return new Promise<IEmbed>((resolve, reject) => {
         if (mongoose.connection.readyState === 0) reject("Database not connected.");
-        console.log(embed);
         new Embed({
             messageId: embed.messageId,
             title: embed.title,

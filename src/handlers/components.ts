@@ -6,7 +6,6 @@ import { Button, Modal, SelectMenu } from 'src/types';
 module.exports = (client: Client) => {
 
     let componentDir = join(__dirname,"../components");
-    console.log(componentDir);
 
     readdirSync(componentDir).forEach(folder => {
         if (!folder) return;
@@ -26,7 +25,6 @@ module.exports = (client: Client) => {
                     break;
                 case "modals":
                     const modal: Modal = require(`../components/${folder}/${file}`).default;
-                    console.log("modal " + JSON.stringify(modal));
                     modals.set(modal.data.name, modal);
                     break;
                 default:

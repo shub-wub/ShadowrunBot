@@ -1,8 +1,8 @@
-import { ActionRowBuilder, Channel, ChannelType, Client, CommandInteraction, MappedGuildChannelTypes, ModalBuilder, PermissionFlagsBits, SlashCommandBuilder, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
+import { ChannelType, Client, CommandInteraction, MappedGuildChannelTypes, SlashCommandBuilder, TextChannel } from "discord.js";
 import { mongoError } from "../utilities";
-import { createGuild } from "../operations/guild";
+import { createGuild } from "#operations";
 import Guild from "../schemas/guild";
-import { IGuild, SlashCommand } from "../types";
+import { SlashCommand } from "../types";
 
 const command: SlashCommand = {
     data: new SlashCommandBuilder()

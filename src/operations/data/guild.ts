@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { IGuild } from "../types";
-import Guild from "../schemas/guild";
+import { IGuild } from "../../types";
+import Guild from "../../schemas/guild";
 
 export const getGuildByGuildId = (guildId: string): Promise<IGuild> => {
     return new Promise<IGuild>((resolve, reject) => {

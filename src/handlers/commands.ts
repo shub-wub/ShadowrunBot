@@ -1,4 +1,4 @@
-import { Client, Routes, SlashCommandBuilder } from "discord.js";
+import { Client, Routes } from "discord.js";
 import { REST } from "@discordjs/rest"
 import { readdirSync } from "fs";
 import { join } from "path";
@@ -6,16 +6,12 @@ import { color } from "../utilities";
 import { SlashCommand } from "../types";
 const { token, clientId, guildId } = process.env;
 
-module.exports = (client: Client) => {
-    //const slashCommands: SlashCommandBuilder[] = [];
-
-    const { commands, commandArray } = client;
-
+export function commandHandler(client: Client) {
     let slashCommandsDir = join(__dirname,"../commands");
-
     readdirSync(slashCommandsDir).forEach(file => {
         if (!file.endsWith(".js")) return;
         let command : SlashCommand = require(`${slashCommandsDir}/${file}`).default;
+        const { commands, commandArray } = client;
         commands.set(command.data.name, command);
         commandArray.push(command.data.toJSON());
     });

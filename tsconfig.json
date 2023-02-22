@@ -14,8 +14,13 @@
         "resolveJsonModule": true,
         "forceConsistentCasingInFileNames": true,
         "removeComments": true,
+        "paths": {
+            "#operations": ["src/operations/exports"],
+            "#handlers": ["src/handlers/exports"]
+        },
         "typeRoots": [
-            "node_modules/@types"
+            "node_modules/@types",
+            "./types"
         ],
         "sourceMap": false,
         "baseUrl": "./"

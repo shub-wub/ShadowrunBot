@@ -4,9 +4,8 @@ import { join } from "path";
 import { color } from "../utilities";
 import { BotEvent } from "../types";
 
-module.exports = (client: Client) => {
+export function eventsHandler(client: Client) {
     let eventsDir = join(__dirname, "../events")
-
     readdirSync(eventsDir).forEach(file => {
         if (!file.endsWith(".js")) return;
         let event: BotEvent = require(`${eventsDir}/${file}`).default;

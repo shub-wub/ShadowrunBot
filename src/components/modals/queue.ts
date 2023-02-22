@@ -1,9 +1,8 @@
-import { createEmbed } from "../../operations/embed";
 import { Modal } from "../../types";
 import Embed from "../../schemas/embed";
 import { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageActionRowComponentBuilder, Client, TextChannel } from 'discord.js';
 import { getThemeColor, mongoError } from "../../utilities";
-import { getGuildByGuildId } from "../../operations/guild";
+import { createEmbed, getGuildByGuildId } from "#operations";
 
 const modal : Modal = {
     data: {

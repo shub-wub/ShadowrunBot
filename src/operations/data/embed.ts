@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { IEmbed } from "../types";
-import Embed from "../schemas/embed";
+import { IEmbed } from "../../types";
+import Embed from "../../schemas/embed";
 
 
 export const getEmbedByMessageId = (messageId: string): Promise<IEmbed> => {

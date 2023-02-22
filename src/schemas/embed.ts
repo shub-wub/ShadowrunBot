@@ -2,9 +2,8 @@ import { Schema, model } from "mongoose";
 import { IEmbed } from "../types";
 
 const emberSchema = new Schema<IEmbed>({
-    messageId: Number,
+    messageId: { type : String , unique : true, required : true },
     title: String,
-    type: String,
     description: String,
     url: String,
     timestamp: String,

@@ -86,7 +86,7 @@ export interface IPlayer extends mongoose.Document {
 }
 
 export interface IEmbed extends mongoose.Document {
-    messageId: number,
+    messageId: string,
     title?: string,
     type?: string,
     description?: string,

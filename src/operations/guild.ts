@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-import { IGuild } from "src/types";
+import { IGuild } from "../types";
 import Guild from "../schemas/guild";
 
 export const getGuildByGuildId = (guildId: string): Promise<IGuild> => {
     return new Promise<IGuild>((resolve, reject) => {
         if (mongoose.connection.readyState === 0) reject("Database not connected.");
-        Guild.findOne({ guildId: guildId }).then(guildRecord => {
+        Guild.findOne<IGuild>({ guildId: guildId }).then(guildRecord => {
             if (!guildRecord) reject(`Could not find guild with id ${guildId}`);
             else resolve(guildRecord);
         });

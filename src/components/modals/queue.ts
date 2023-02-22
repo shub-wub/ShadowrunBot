@@ -1,21 +1,18 @@
-import { Modal } from "src/types";
-
-const {EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+import { createEmbed } from "../../operations/embed";
+import { Modal } from "../../types";
+import Embed from "../../schemas/embed";
+import { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageActionRowComponentBuilder, Client, TextChannel } from 'discord.js';
+import { getThemeColor, mongoError } from "../../utilities";
+import { getGuildByGuildId } from "../../operations/guild";
 
 const modal : Modal = {
     data: {
         name: 'queue'
     },
-    execute: async (interaction, client) => {
-        await interaction.reply({
-            content: "pushed"
-        });
-
-        const embed = new EmbedBuilder()
-        .setCustomId()
+    execute: (interaction, client: Client) => {
+        const newEmbed = new EmbedBuilder()
         .setTitle('Queue')
-        .setDescription("Click queue if you are ready to join a lobby and play right now. When 8 players have joined the queue teams will be created.")
-        .setColor(0x18e1ee)
+        .setColor(getThemeColor("embed"))
         .addFields([
             {
                 name: `MatchCount`,
@@ -28,7 +25,7 @@ const modal : Modal = {
                 inline: false
             }
         ]);
-        const activeButtonRow1 = new ActionRowBuilder()
+        const activeButtonRow1 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
             .addComponents([
                 new ButtonBuilder()
                     .setCustomId('queue')
@@ -43,7 +40,7 @@ const modal : Modal = {
                     .setLabel('Remove Me')
                     .setStyle(ButtonStyle.Danger),
                 ]);
-        const activeButtonRow2 = new ActionRowBuilder()
+        const activeButtonRow2 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
             .addComponents([
                 new ButtonBuilder()
                     .setCustomId('requeue')
@@ -58,17 +55,49 @@ const modal : Modal = {
                     .setLabel('Ready Up Player')
                     .setStyle(ButtonStyle.Secondary),
                 ]);
-        const activeButtonRow3 = new ActionRowBuilder()
+        const activeButtonRow3 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
             .addComponents([
                 new ButtonBuilder()
                     .setCustomId('score-match')
                     .setLabel('Score Match')
                     .setStyle(ButtonStyle.Danger)
                 ]);
-
-        await interaction.reply({
-            embeds: [embed], 
-            components: [activeButtonRow1, activeButtonRow2, activeButtonRow3]
+        getGuildByGuildId(interaction.guildId as string).then(guildRecord => {
+            client.channels.fetch(guildRecord.queueChannelId).then(channel => {
+                (channel as TextChannel).send({
+                    embeds: [newEmbed], 
+                    components: [activeButtonRow1, activeButtonRow2, activeButtonRow3]
+                }).then(message => {
+                    const embed = new Embed({
+                        messageId: message.id,
+                        title: newEmbed.data.title,
+                        description: newEmbed.data.description,
+                        url: newEmbed.data.url,
+                        timestamp: newEmbed.data.timestamp,
+                        color: newEmbed.data.color,
+                        footer: newEmbed.data.footer,
+                        image: newEmbed.data.image,
+                        thumbnail: newEmbed.data.thumbnail,
+                        provider: newEmbed.data.provider,
+                        author: newEmbed.data.author,
+                        fields: newEmbed.data.fields,
+                        video: newEmbed.data.video,
+                    });
+            
+                    createEmbed(embed).then(() => {
+                        interaction.reply({
+                            content: `The queue has been created. ${message.url}`,
+                            ephemeral: true
+                        });
+                    }).catch(error => {
+                        mongoError(error);
+                        interaction.reply({
+                            content: `There was an error creating the Embed record in the database.`,
+                            ephemeral: true
+                        });
+                    });
+                });
+            });
         });
     },
     cooldown: 10

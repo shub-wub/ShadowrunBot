@@ -2,10 +2,11 @@ import chalk from "chalk";
 import { GuildMember, PermissionFlagsBits, PermissionResolvable, TextChannel } from "discord.js";
 import { MongooseError } from "mongoose";
 
-type colorType = "text" | "variable" | "error";
+type colorType = "text" | "embed" | "variable" | "error";
 
 const themeColors = {
     text: "#ff8e4d",
+    embed: "#18e1ee",
     variable: "#ff624d",
     error: "#f5426c"
 }

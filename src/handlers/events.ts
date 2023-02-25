@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 import { readdirSync } from "fs";
 import { join } from "path";
-import { color } from "../utilities";
+import { color } from "#utilities";
 import { BotEvent } from "../types";
 
 export function eventsHandler(client: Client) {

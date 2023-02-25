@@ -1,5 +1,5 @@
 import { ChannelType, Client, CommandInteraction, MappedGuildChannelTypes, SlashCommandBuilder, TextChannel } from "discord.js";
-import { mongoError } from "../utilities";
+import { mongoError } from "#utilities";
 import { createGuild } from "#operations";
 import Guild from "../schemas/guild";
 import { SlashCommand } from "../types";

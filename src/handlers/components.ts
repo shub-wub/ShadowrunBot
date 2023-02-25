@@ -1,7 +1,7 @@
 import { readdirSync } from 'fs';
 import { Client } from "discord.js";
 import { join } from 'path';
-import { Button, Modal, SelectMenu } from 'src/types';
+import { Button, Modal, SelectMenu } from '../types';
 
 export function componentHandler(client: Client) {
     let componentDir = join(__dirname,"../components");

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { color } from "../utilities";
+import { color } from "#utilities";
 const { databaseToken } = process.env;
 
 export function mongoHandler() {

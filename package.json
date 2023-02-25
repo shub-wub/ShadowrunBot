@@ -18,7 +18,8 @@
   "homepage": "https://github.com/shub-wub/ShadowrunBot#readme",
   "imports": {
     "#operations": ["./dist/operations/exports.js"],
-    "#handlers": ["./dist/handlers/exports.js"]
+    "#handlers": ["./dist/handlers/exports.js"],
+    "#utilities": ["./dist/utilities.js"]
   },
   "dependencies": {
     "@types/node": "^18.13.0",

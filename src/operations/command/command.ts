@@ -1,7 +1,18 @@
-import { mongoError } from "#utilities";
-import { CommandInteraction, CacheType, ChannelType, MappedGuildChannelTypes, TextChannel } from "discord.js";
-import { createGuild } from "#operations";
+import {getThemeColor, mongoError} from "#utilities";
+import {
+    ButtonStyle,
+    CacheType,
+    ChannelType,
+    CommandInteraction,
+    EmbedBuilder,
+    MappedGuildChannelTypes,
+    MessageActionRowComponentBuilder,
+    TextChannel
+} from "discord.js";
+import {createGuild} from "#operations";
 import Guild from "../../schemas/guild";
+import Player from '../../schemas/player';
+import {IPlayer} from "../../types";
 
 export const srInitialize = (interaction: CommandInteraction<CacheType>): void => {
     interaction.guild?.channels.create({
@@ -47,4 +58,22 @@ export const srInitialize = (interaction: CommandInteraction<CacheType>): void =
             });
         });
     });
+}
+
+export const leaderboard = async (interaction: CommandInteraction<CacheType>): Promise<void> => {
+    // Retrieve the top 10 players from the database and sort by rating
+    const players: IPlayer[] = await Player.find().sort('-rating').limit(10);
+
+    // Format the player data into a message embed
+    const embed: any = new EmbedBuilder()
+        .setTitle('Leaderboard')
+        .setColor(getThemeColor("embed"))
+        .addFields(
+            players.map((player: IPlayer, index: number) => {
+                return {name: " ", value: `${index+1}. ${player.discordUsername} - ${player.rating}`} as { name: string, value: string };
+            })
+        );
+
+    // Send the message embed back to the user
+    await interaction.reply({embeds: [embed]});
 }

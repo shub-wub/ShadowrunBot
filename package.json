@@ -4,7 +4,7 @@
   "description": "",
   "main": "bot.js",
   "scripts": {
-    "start": "tsc && cls && node dist/bot.js"
+    "start": "tsc && node dist/bot.js"
   },
   "repository": {
     "type": "git",

@@ -3,7 +3,7 @@ import { CommandInteraction, CacheType, ChannelType, MappedGuildChannelTypes, Te
 import { createGuild } from "#operations";
 import Guild from "../../schemas/guild";
 
-export const srInitialize = (interaction: CommandInteraction<CacheType>): void => {
+export const srinitialize = (interaction: CommandInteraction<CacheType>): void => {
     interaction.guild?.channels.create({
         name: "Ranked",
         type: ChannelType.GuildCategory
@@ -11,7 +11,7 @@ export const srInitialize = (interaction: CommandInteraction<CacheType>): void =
         const queueChannelCreate = interaction.guild?.channels.create({
                 name: "queue",
                 type: ChannelType.GuildText,
-                parent: cat.id
+                parent: cat.id 
             });
         const matchChannelCreate = interaction.guild?.channels.create({
                 name: "matches",

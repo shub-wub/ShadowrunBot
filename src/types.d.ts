@@ -72,7 +72,6 @@ declare global {
 -------------------------------------------------------------------------------------------------*/
 export interface IPlayer extends mongoose.Document {
     discordId: Number,
-    discordUsername: String,
     gamertag: String,
     rating: Number,
     wins: Number,
@@ -83,6 +82,12 @@ export interface IPlayer extends mongoose.Document {
     bonusTotal: Number,
     friendlyFire: Number,
     isBanned: Boolean
+}
+
+export interface IQueue extends mongoose.Document {
+    discordId: Number,
+    messageId: String,
+    ready: Boolean
 }
 
 export interface IEmbed extends mongoose.Document {

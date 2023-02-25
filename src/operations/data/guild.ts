@@ -21,8 +21,8 @@ export const createGuild = (guild: IGuild): Promise<IGuild> => {
             queueChannelId: guild.queueChannelId,
             matchChannelId: guild.matchChannelId,
             leaderboardChannelId: guild.leaderboardChannelId
-        }).save().then(savedRecod => {
-            resolve(savedRecod);
+        }).save().then(savedRecord => {
+            resolve(savedRecord);
         }).catch((error) => reject(error));
     });
 }

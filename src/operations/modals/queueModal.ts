@@ -42,13 +42,8 @@ export const submitQueueModal = (interaction: ModalSubmitInteraction<CacheType>,
         .setColor(getThemeColor("embed"))
         .addFields([
             {
-                name: `MatchCount`,
-                value: '0',
-                inline: false
-            },
-            {
-                name: `Queue`,
-                value: `+`,
+                name: `Players in Queue - 0`,
+                value: `\u200b`,
                 inline: false
             }
         ]);
@@ -59,41 +54,35 @@ export const submitQueueModal = (interaction: ModalSubmitInteraction<CacheType>,
                 .setLabel('Queue')
                 .setStyle(ButtonStyle.Success),
             new ButtonBuilder()
-                .setCustomId('queue-player')
-                .setLabel('Queue Player')
-                .setStyle(ButtonStyle.Success),
+                .setCustomId('readyup')
+                .setLabel('Ready Up')
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(true),
             new ButtonBuilder()
                 .setCustomId('removeQueue')
                 .setLabel('Remove Me')
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId('requeue')
+                .setLabel('Requeue')
                 .setStyle(ButtonStyle.Danger),
             ]);
     const activeButtonRow2 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
         .addComponents([
             new ButtonBuilder()
-                .setCustomId('requeue')
-                .setLabel('Requeue')
-                .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-                .setCustomId('readyup')
-                .setLabel('Ready Up')
-                .setStyle(ButtonStyle.Secondary),
-            new ButtonBuilder()
                 .setCustomId('ready-player')
                 .setLabel('Ready Up Player')
                 .setStyle(ButtonStyle.Secondary),
-            ]);
-    const activeButtonRow3 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
-        .addComponents([
-            new ButtonBuilder()
-                .setCustomId('score-match')
-                .setLabel('Score Match')
-                .setStyle(ButtonStyle.Danger)
+                new ButtonBuilder()
+                .setCustomId('queue-player')
+                .setLabel('Queue Player')
+                .setStyle(ButtonStyle.Success),
             ]);
     getGuildByGuildId(interaction.guildId as string).then(guildRecord => {
         client.channels.fetch(guildRecord.queueChannelId).then(channel => {
             (channel as TextChannel).send({
                 embeds: [newEmbed], 
-                components: [activeButtonRow1, activeButtonRow2, activeButtonRow3]
+                components: [activeButtonRow1, activeButtonRow2]
             }).then(message => {
                 const embed = new Embed({
                     messageId: message.id,

@@ -16,14 +16,15 @@
         "removeComments": true,
         "paths": {
             "#operations": ["src/operations/exports"],
-            "#handlers": ["src/handlers/exports"]
+            "#handlers": ["src/handlers/exports"],
+            "#utilities": ["src/utilities"]
         },
         "typeRoots": [
             "node_modules/@types",
             "./types"
         ],
         "sourceMap": false,
-        "baseUrl": "./"
+        "baseUrl": "."
     },
     "files": [
         "src/bot.ts"

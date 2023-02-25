@@ -2,7 +2,7 @@ import { Client, Routes } from "discord.js";
 import { REST } from "@discordjs/rest"
 import { readdirSync } from "fs";
 import { join } from "path";
-import { color } from "../utilities";
+import { color } from "#utilities";
 import { SlashCommand } from "../types";
 const { token, clientId, guildId } = process.env;
 

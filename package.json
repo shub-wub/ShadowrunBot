@@ -4,7 +4,7 @@
   "description": "",
   "main": "bot.js",
   "scripts": {
-    "start": "tsc && cls && node dist/bot.js"
+    "start": "tsc && node dist/bot.js"
   },
   "repository": {
     "type": "git",
@@ -18,7 +18,8 @@
   "homepage": "https://github.com/shub-wub/ShadowrunBot#readme",
   "imports": {
     "#operations": ["./dist/operations/exports.js"],
-    "#handlers": ["./dist/handlers/exports.js"]
+    "#handlers": ["./dist/handlers/exports.js"],
+    "#utilities": ["./dist/utilities.js"]
   },
   "dependencies": {
     "@types/node": "^18.13.0",

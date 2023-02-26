@@ -30,8 +30,8 @@ export const createEmbed = (embed: IEmbed): Promise<IEmbed> => {
             author: embed.author,
             fields: embed.fields,
             video: embed.video,
-        }).save().then(savedRecod => {
-            resolve(savedRecod);
+        }).save().then(savedRecord => {
+            resolve(savedRecord);
         }).catch((error) => reject(error));
     });
 }

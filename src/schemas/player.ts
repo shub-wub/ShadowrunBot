@@ -3,7 +3,6 @@ import { IPlayer } from "../types";
 
 const playerSchema = new Schema<IPlayer>({
     discordId: Number,
-    discordUsername: String,
     gamertag: String,
     rating: Number,
     wins: Number,

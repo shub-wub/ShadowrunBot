@@ -17,7 +17,7 @@ import Player from '../../schemas/player';
 import {IPlayer} from "../../types";
 import {ButtonBuilder} from "@discordjs/builders";
 
-export const srInitialize = (interaction: CommandInteraction<CacheType>): void => {
+export const srinitialize = (interaction: CommandInteraction<CacheType>): void => {
     interaction.guild?.channels.create({
         name: "Ranked",
         type: ChannelType.GuildCategory
@@ -25,7 +25,7 @@ export const srInitialize = (interaction: CommandInteraction<CacheType>): void =
         const queueChannelCreate = interaction.guild?.channels.create({
                 name: "queue",
                 type: ChannelType.GuildText,
-                parent: cat.id
+                parent: cat.id 
             });
         const matchChannelCreate = interaction.guild?.channels.create({
                 name: "matches",

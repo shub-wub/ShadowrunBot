@@ -1,11 +1,13 @@
 import {getThemeColor, mongoError} from "#utilities";
 import {
+    ActionRowBuilder,
     ButtonStyle,
     CacheType,
     ChannelType,
     CommandInteraction,
     EmbedBuilder,
     MappedGuildChannelTypes,
+    Message,
     MessageActionRowComponentBuilder,
     TextChannel
 } from "discord.js";
@@ -13,6 +15,7 @@ import {createGuild} from "#operations";
 import Guild from "../../schemas/guild";
 import Player from '../../schemas/player';
 import {IPlayer} from "../../types";
+import {ButtonBuilder} from "@discordjs/builders";
 
 export const srInitialize = (interaction: CommandInteraction<CacheType>): void => {
     interaction.guild?.channels.create({
@@ -61,19 +64,64 @@ export const srInitialize = (interaction: CommandInteraction<CacheType>): void =
 }
 
 export const leaderboard = async (interaction: CommandInteraction<CacheType>): Promise<void> => {
-    // Retrieve the top 10 players from the database and sort by rating
-    const players: IPlayer[] = await Player.find().sort('-rating').limit(10);
+    // Retrieve the players from the database and sort by rating
+    const players: IPlayer[] = await Player.find().sort('-rating');
+    const playersPerPage = 10;
 
-    // Format the player data into a message embed
-    const embed: any = new EmbedBuilder()
-        .setTitle('Leaderboard')
-        .setColor(getThemeColor("embed"))
-        .addFields(
-            players.map((player: IPlayer, index: number) => {
-                return {name: " ", value: `${index+1}. ${player.discordUsername} - ${player.rating}`} as { name: string, value: string };
-            })
-        );
+    // Define a function to create a message embed with a given page of players
+    const createEmbed = (page: number): any => {
+        const start = (page - 1) * playersPerPage;
+        const end = start + playersPerPage;
+        const pagePlayers = players.slice(start, end);
+        const embed: any = new EmbedBuilder()
+            .setTitle('__**ELO Leaderboard**__')
+            .setColor(getThemeColor("embed"))
+            .setDescription(`Page ${page} of ${Math.ceil(players.length / playersPerPage)}`)
+            .addFields(pagePlayers.map((player: IPlayer, index: number) => {
+                return {name: " ", value: `**${index+1+(10*(page-1))}.** ${player.discordUsername} - ${player.rating}`} as { name: string, value: string };
+            }));
+        return embed;
+    };
 
-    // Send the message embed back to the user
-    await interaction.reply({embeds: [embed]});
+    // Set up a button row with pagination buttons
+    const createButtonRow = (page: number): ActionRowBuilder<ButtonBuilder> => {
+        const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
+        const previousButton = new ButtonBuilder()
+            .setCustomId('previous')
+            .setLabel('Previous')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(page === 1);
+        const nextButton = new ButtonBuilder()
+            .setCustomId('next')
+            .setLabel('Next')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(page === Math.ceil(players.length / playersPerPage));
+        buttonRow.addComponents(previousButton, nextButton);
+        return buttonRow;
+    };
+
+    // Set up a button collector to listen for button clicks and update the message
+    const setupButtonCollector = (message: Message) => {
+        let page = 1;
+        const collector = message.createMessageComponentCollector();
+        collector.on('collect', async (interaction) => {
+            switch (interaction.customId) {
+                case 'previous':
+                    page -= 1;
+                    break;
+                case 'next':
+                    page += 1;
+                    break;
+            }
+            const newEmbed = createEmbed(page);
+            const newButtonRow = createButtonRow(page);
+            await interaction.update({ embeds: [newEmbed], components: [newButtonRow] });
+        });
+    };
+
+    // Send the initial message with the first page of players and pagination buttons
+    const initialEmbed = createEmbed(1);
+    const buttonRow = createButtonRow(1);
+    const initialMessage = await interaction.reply({ embeds: [initialEmbed], components: [buttonRow], fetchReply: true });
+    setupButtonCollector(initialMessage);
 }

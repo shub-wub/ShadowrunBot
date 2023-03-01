@@ -8,7 +8,7 @@ const button : Button = {
     execute: async (interaction, client) => {
         joinQueue(interaction);
     },
-    cooldown: 10
+    //cooldown: 10
 }
 
 export default button;

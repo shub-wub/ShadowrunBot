@@ -71,8 +71,7 @@ declare global {
         Schema Types
 -------------------------------------------------------------------------------------------------*/
 export interface IPlayer extends mongoose.Document {
-    discordId: Number,
-    gamertag: String,
+    discordId: String,
     rating: Number,
     wins: Number,
     losses: Number,
@@ -85,7 +84,7 @@ export interface IPlayer extends mongoose.Document {
 }
 
 export interface IQueue extends mongoose.Document {
-    discordId: Number,
+    discordId: String,
     messageId: String,
     ready: Boolean
 }

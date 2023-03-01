@@ -2,27 +2,18 @@ import mongoose from "mongoose";
 import { IGuild } from "../../types";
 import Guild from "../../schemas/guild";
 
-export const getGuildByGuildId = (guildId: string): Promise<IGuild> => {
-    return new Promise<IGuild>((resolve, reject) => {
-        if (mongoose.connection.readyState === 0) reject("Database not connected.");
-        Guild.findOne<IGuild>({ guildId: guildId }).then(guildRecord => {
-            if (!guildRecord) reject(`Could not find guild with id ${guildId}`);
-            else resolve(guildRecord);
-        });
-    });
+export const getGuildByGuildId = async (guildId: string): Promise<IGuild | null> => {
+    if (mongoose.connection.readyState === 0) throw new Error("Database not connected.");
+    return await Guild.findOne<IGuild>({ guildId: guildId });
 }
 
-export const createGuild = (guild: IGuild): Promise<IGuild> => {
-    return new Promise<IGuild>((resolve, reject) => {
-        if (mongoose.connection.readyState === 0) reject("Database not connected.");
-        new Guild({
+export const createGuild = async (guild: IGuild): Promise<IGuild> => {
+        if (mongoose.connection.readyState === 0) throw new Error("Database not connected.");
+        return await new Guild({
             guildId: guild.guildId,
             rankedCategoryId: guild.rankedCategoryId,
             queueChannelId: guild.queueChannelId,
             matchChannelId: guild.matchChannelId,
             leaderboardChannelId: guild.leaderboardChannelId
-        }).save().then(savedRecord => {
-            resolve(savedRecord);
-        }).catch((error) => reject(error));
-    });
+        }).save();
 }

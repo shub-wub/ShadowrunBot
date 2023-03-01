@@ -71,39 +71,22 @@ declare global {
         Schema Types
 -------------------------------------------------------------------------------------------------*/
 export interface IPlayer extends mongoose.Document {
-    discordId: String,
-    rating: Number,
-    wins: Number,
-    losses: Number,
-    kills: Number,
-    deaths: Number,
-    resurrects: Number,
-    bonusTotal: Number,
-    friendlyFire: Number,
-    isBanned: Boolean
+    discordId: string,
+    rating: number,
+    wins: number,
+    losses: number,
+    kills: number,
+    deaths: number,
+    resurrects: number,
+    bonusTotal: number,
+    friendlyFire: number,
+    isBanned: boolean
 }
 
 export interface IQueue extends mongoose.Document {
-    discordId: String,
-    messageId: String,
-    ready: Boolean
-}
-
-export interface IEmbed extends mongoose.Document {
+    discordId: string,
     messageId: string,
-    title?: string,
-    type?: string,
-    description?: string,
-    url?: string,
-    timestamp?: string,
-    color?: string,
-    footer?: string,
-    image?: string,
-    thumbnail?: string,
-    provider?: string,
-    author?: string,
-    fields?: string,
-    video?: string
+    ready: boolean
 }
 
 export interface IGuild extends mongoose.Document {

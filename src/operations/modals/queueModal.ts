@@ -1,6 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CacheType, Client, CommandInteraction, EmbedBuilder, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
 import { getThemeColor } from "#utilities";
-import { getGuildByGuildId } from "#operations";
+import { IGuild } from "../../types";
+import Guild from '../../schemas/guild';
 
 export const openQueueModal = (interaction: CommandInteraction<CacheType>): void => {
     const modal = new ModalBuilder()
@@ -77,7 +78,7 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
                 .setLabel('Queue Player')
                 .setStyle(ButtonStyle.Success),
             ]);
-    var guildRecord = await getGuildByGuildId(interaction.guildId as string);
+    var guildRecord = await Guild.findOne<IGuild>({ guildId: interaction.guildId });
     if(guildRecord) {
         var channel = await client.channels.fetch(guildRecord.queueChannelId);
         var message = await (channel as TextChannel).send({

@@ -89,6 +89,12 @@ export interface IQueue extends mongoose.Document {
     ready: boolean
 }
 
+export interface ILeaderboard extends mongoose.Document {
+    messageId: string,
+    device: string,
+    page: number;
+}
+
 export interface IGuild extends mongoose.Document {
     guildId: string,
     rankedCategoryId: string,

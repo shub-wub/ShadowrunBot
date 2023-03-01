@@ -1,10 +1,12 @@
-import { getGuildByGuildId } from "#operations";
-import { getThemeColor } from "#utilities";
-import { CommandInteraction, CacheType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel, Client } from "discord.js";
-import { IPlayer } from "src/types";
+import { getThemeColor, mongoError } from "#utilities";
+import { CommandInteraction, CacheType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel, Client, BaseInteraction, ButtonInteraction } from "discord.js";
+import { IGuild, IPlayer, ILeaderboard } from "../../types";
+import Guild from '../../schemas/guild';
+import Leaderboard from '../../schemas/leaderboard';
+import { MongooseError } from "mongoose";
 
 // Define a function to create a message embed with a given page of players
-export const createLeaderboardEmbed = (pageNumber: number, players: IPlayer[], playersPerPage: number, device: string): any => {
+export const createLeaderboardEmbed = (/*interaction: CommandInteraction | ButtonInteraction,*/ pageNumber: number, players: IPlayer[], playersPerPage: number, device: string): any => {
     const start = (pageNumber - 1) * playersPerPage;
     const end = start + playersPerPage;
     const pagePlayers = players.slice(start, end);
@@ -15,9 +17,9 @@ export const createLeaderboardEmbed = (pageNumber: number, players: IPlayer[], p
       }
     var fields: Field[] = [];
 
-    fields.push({name: "Page", value: pageNumber.toString(), inline: true});
+    /*fields.push({name: "Page", value: pageNumber.toString(), inline: true});
     fields.push({name: "Device", value: device, inline: true});
-    fields.push({ name: '\u200b', value: '\u200b', inline: true });
+    fields.push({ name: '\u200b', value: '\u200b', inline: true });*/
 
     if (device == "mobile") {
         for (let i = 0; i < pagePlayers.length; i++) {
@@ -71,13 +73,28 @@ export const leaderboard = async (interaction: CommandInteraction<CacheType>, cl
     const initialEmbed = createLeaderboardEmbed(1, players, playersPerPage, device);
     const buttonRow = createLeaderboardButtonRow(1, players, playersPerPage);
     
-    var guildRecord = await getGuildByGuildId(interaction.guildId as string);
+    var guildRecord = await Guild.findOne<IGuild>({ guildId: interaction.guildId });
     if(guildRecord) {
         var channel = await client.channels.fetch(guildRecord.leaderboardChannelId);
         var message = await (channel as TextChannel).send({
             embeds: [initialEmbed], 
             components: [buttonRow]
         });
+        // new leaderboard
+        try {
+            await new Leaderboard({
+                messageId: message.id,
+                device: device,
+                page: 1
+            }).save();
+        } catch(error) {
+            mongoError(error as MongooseError);
+            await interaction.reply({
+                content: `There was an error adding the leaderboard to the database.`,
+                ephemeral: true
+            });
+            return;
+        }
         await interaction.reply({
             content: `The leaderboard has been created. ${message.url}`,
             ephemeral: true

@@ -1,7 +1,7 @@
 import { mongoError } from "#utilities";
 import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder} from "discord.js";
-import { createQueue, getPlayerByDiscordId, getQueueByPlayerIdAndMessageId, getQueuePlayersByMessageId } from "#operations";
 import Queue from "../../schemas/queue";
+import Player from "../../schemas/player";
 import { IPlayer, IQueue } from "../../types";
 import { MongooseError } from "mongoose";
 
@@ -9,9 +9,9 @@ export const joinQueue = (interaction: ButtonInteraction<CacheType>): void => {
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
 
-    const playerQuery =  getPlayerByDiscordId(interaction.user.id);
-    const queueQuery = getQueueByPlayerIdAndMessageId(interaction.message.id, interaction.user.id);
-    const queuePlayers = getQueuePlayersByMessageId(interaction.message.id);
+    const playerQuery = Player.findOne<IPlayer>({ discordId: interaction.user.id });
+    const queueQuery = Queue.find<IQueue>().and([{ messageId: interaction.message.id}, { discordId: interaction.user.id}]);
+    const queuePlayers = Queue.find<IQueue>({ messageId: interaction.message.id });
 
     Promise.all([playerQuery, queueQuery, queuePlayers]).then(async (queryResults: [IPlayer | null, IQueue[], IQueue[]]) => {
         if (!queryResults[0]) {
@@ -29,15 +29,13 @@ export const joinQueue = (interaction: ButtonInteraction<CacheType>): void => {
             return;
         }*/
 
-        const newQueueRecord = new Queue({
-            discordId: interaction.user.id,
-            messageId: interaction.message.id,
-            ready: false
-        });
-
         var queueRecord = null;
         try {
-            queueRecord = await createQueue(newQueueRecord);
+            queueRecord = await new Queue({
+                discordId: interaction.user.id,
+                messageId: interaction.message.id,
+                ready: false
+            }).save();
         } catch(error) {
             mongoError(error as MongooseError);
             await interaction.reply({

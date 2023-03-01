@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 import { IQueue } from "../types";
 
 const queueSchema = new Schema<IQueue>({
-    discordId: Number,
+    discordId: String,
     messageId: String,
     ready: Boolean
 });

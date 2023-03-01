@@ -2,11 +2,11 @@ import { SlashCommandBuilder } from "discord.js";
 import { SlashCommand } from "../types";
 import { openQueueModal } from "#operations";
 
-const command : SlashCommand = {
+const command: SlashCommand = {
     data: new SlashCommandBuilder()
         .setName("queue")
         .setDescription("Create a queue"),
-    execute: async (interaction, client) => {
+    execute: (interaction, client) => {
         openQueueModal(interaction);
     },
     cooldown: 10

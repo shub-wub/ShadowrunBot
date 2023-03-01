@@ -2,6 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CacheType, Client, Comman
 import { getThemeColor, mongoError } from "#utilities";
 import { createEmbed, getGuildByGuildId } from "#operations";
 import Embed from "../../schemas/embed";
+import { MongooseError } from "mongoose";
 
 export const openQueueModal = (interaction: CommandInteraction<CacheType>): void => {
     const modal = new ModalBuilder()
@@ -36,7 +37,7 @@ export const openQueueModal = (interaction: CommandInteraction<CacheType>): void
     interaction.showModal(modal);
 }
 
-export const submitQueueModal = (interaction: ModalSubmitInteraction<CacheType>, client: Client): void => {
+export const submitQueueModal = async (interaction: ModalSubmitInteraction<CacheType>, client: Client): Promise<void> => {
     const newEmbed = new EmbedBuilder()
         .setTitle('Queue')
         .setColor(getThemeColor("embed"))
@@ -78,41 +79,47 @@ export const submitQueueModal = (interaction: ModalSubmitInteraction<CacheType>,
                 .setLabel('Queue Player')
                 .setStyle(ButtonStyle.Success),
             ]);
-    getGuildByGuildId(interaction.guildId as string).then(guildRecord => {
-        client.channels.fetch(guildRecord.queueChannelId).then(channel => {
-            (channel as TextChannel).send({
-                embeds: [newEmbed], 
-                components: [activeButtonRow1, activeButtonRow2]
-            }).then(message => {
-                const embed = new Embed({
-                    messageId: message.id,
-                    title: newEmbed.data.title,
-                    description: newEmbed.data.description,
-                    url: newEmbed.data.url,
-                    timestamp: newEmbed.data.timestamp,
-                    color: newEmbed.data.color,
-                    footer: newEmbed.data.footer,
-                    image: newEmbed.data.image,
-                    thumbnail: newEmbed.data.thumbnail,
-                    provider: newEmbed.data.provider,
-                    author: newEmbed.data.author,
-                    fields: newEmbed.data.fields,
-                    video: newEmbed.data.video,
-                });
-        
-                createEmbed(embed).then(() => {
-                    interaction.reply({
-                        content: `The queue has been created. ${message.url}`,
-                        ephemeral: true
-                    });
-                }).catch(error => {
-                    mongoError(error);
-                    interaction.reply({
-                        content: `There was an error creating the Embed record in the database.`,
-                        ephemeral: true
-                    });
-                });
-            });
+    var guildRecord = await getGuildByGuildId(interaction.guildId as string);
+    if(guildRecord) {
+        var channel = await client.channels.fetch(guildRecord.queueChannelId);
+        var message = await (channel as TextChannel).send({
+            embeds: [newEmbed], 
+            components: [activeButtonRow1, activeButtonRow2]
         });
-    });
+        const embed = new Embed({
+            messageId: message.id,
+            title: newEmbed.data.title,
+            description: newEmbed.data.description,
+            url: newEmbed.data.url,
+            timestamp: newEmbed.data.timestamp,
+            color: newEmbed.data.color,
+            footer: newEmbed.data.footer,
+            image: newEmbed.data.image,
+            thumbnail: newEmbed.data.thumbnail,
+            provider: newEmbed.data.provider,
+            author: newEmbed.data.author,
+            fields: newEmbed.data.fields,
+            video: newEmbed.data.video,
+        });
+
+        try {
+        await createEmbed(embed);
+            await interaction.reply({
+                content: `The queue has been created. ${message.url}`,
+                ephemeral: true
+            });
+        } catch(error) {
+            mongoError(error as MongooseError);
+            await interaction.reply({
+                content: `There was an error creating the Embed record in the database.`,
+                ephemeral: true
+            });
+            return;
+        };
+    } else {
+        await interaction.reply({
+            content: `There was no guild record found. Try using /srinitialize first.`,
+            ephemeral: true
+        });
+    }
 }

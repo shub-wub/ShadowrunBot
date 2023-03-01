@@ -2,8 +2,7 @@ import { Schema, model } from "mongoose";
 import { IPlayer } from "../types";
 
 const playerSchema = new Schema<IPlayer>({
-    discordId: Number,
-    gamertag: String,
+    discordId: { type : String , unique : true, required : true },
     rating: Number,
     wins: Number,
     losses: Number,

@@ -6,7 +6,7 @@ const command: SlashCommand = {
     data: new SlashCommandBuilder()
         .setName("srinitialize")
         .setDescription("Use once to initialize the Shadowrun Bot."),
-    execute: async (interaction: CommandInteraction, client: Client) => {
+    execute: (interaction: CommandInteraction, client: Client) => {
         srinitialize(interaction);
     }
 }

@@ -1,11 +1,11 @@
 import { mongoError} from "#utilities";
 import { CacheType, ChannelType, CommandInteraction, MappedGuildChannelTypes, TextChannel } from "discord.js";
-import { createGuild, getGuildByGuildId} from "#operations";
 import Guild from "../../schemas/guild";
 import { MongooseError } from "mongoose";
+import { IGuild } from "../../types";
 
 export const srinitialize = async (interaction: CommandInteraction<CacheType>): Promise<void> => {
-    var existingGuildRecord = await getGuildByGuildId(interaction.guild?.id as string)
+    var existingGuildRecord = await Guild.findOne<IGuild>({ guildId: interaction.guildId });
     if(existingGuildRecord) {
         await interaction.reply({
             content: `srinitialize has already been ran on this server.`,
@@ -34,16 +34,14 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
         });
 
     Promise.all([queueChannelCreate as Promise<TextChannel>, matchChannelCreate as Promise<TextChannel>, leaderboardChannelCreate as Promise<TextChannel>]).then(async (channels) => {
-        const guild = new Guild({
-            guildId: interaction.commandGuildId as string,
-            rankedCategoryId: cat.id,
-            queueChannelId: channels[0].id,
-            matchChannelId: channels[1].id,
-            leaderboardChannelId: channels[2].id
-        });
-
         try {
-        var guildRecord = await createGuild(guild);
+            var guildRecord = await new Guild({
+                guildId: interaction.commandGuildId as string,
+                rankedCategoryId: cat.id,
+                queueChannelId: channels[0].id,
+                matchChannelId: channels[1].id,
+                leaderboardChannelId: channels[2].id
+            }).save();
             await interaction.reply({
                 content: `Category with id: ${guildRecord.rankedCategoryId} was created. Channels with ids ${guildRecord.queueChannelId}, ${guildRecord.matchChannelId}, ${guildRecord.leaderboardChannelId} were created.`,
                 ephemeral: true

@@ -1,15 +1,15 @@
 import { mongoError } from "#utilities";
 import { CommandInteraction, CacheType } from "discord.js";
-import { getPlayerByDiscordId } from "#operations";
 import Player from "../../schemas/player";
 import { MongooseError } from "mongoose";
+import { IPlayer } from "../../types";
 
 export const statRegister = async (interaction: CommandInteraction<CacheType>): Promise<void> => {
     var discordUser = interaction.options.getUser('discorduser');
     if(!discordUser) return;
     var discordId = discordUser.id;
 
-    var existingPlayer = await getPlayerByDiscordId(discordId);
+    var existingPlayer = await Player.findOne<IPlayer>({ discordId: discordId });
     if(existingPlayer) {
         await interaction.reply({
             content: `Player with discord tag: ${discordUser.username} already exists in the stat tracking database.`,

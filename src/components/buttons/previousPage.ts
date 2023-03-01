@@ -1,12 +1,12 @@
-import { joinQueue } from '#operations';
+import { pageButton } from '#operations';
 import { Button } from 'src/types';
 
 const button: Button = {
     data: {
-        name: 'queue'
+        name: 'previous'
     },
     execute: async (interaction, client) => {
-        joinQueue(interaction);
+        pageButton(interaction, "previous");
     },
     //cooldown: 10
 }

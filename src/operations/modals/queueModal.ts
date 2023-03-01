@@ -1,8 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CacheType, Client, CommandInteraction, EmbedBuilder, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
-import { getThemeColor, mongoError } from "#utilities";
-import { createEmbed, getGuildByGuildId } from "#operations";
-import Embed from "../../schemas/embed";
-import { MongooseError } from "mongoose";
+import { getThemeColor } from "#utilities";
+import { getGuildByGuildId } from "#operations";
 
 export const openQueueModal = (interaction: CommandInteraction<CacheType>): void => {
     const modal = new ModalBuilder()
@@ -86,36 +84,10 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
             embeds: [newEmbed], 
             components: [activeButtonRow1, activeButtonRow2]
         });
-        const embed = new Embed({
-            messageId: message.id,
-            title: newEmbed.data.title,
-            description: newEmbed.data.description,
-            url: newEmbed.data.url,
-            timestamp: newEmbed.data.timestamp,
-            color: newEmbed.data.color,
-            footer: newEmbed.data.footer,
-            image: newEmbed.data.image,
-            thumbnail: newEmbed.data.thumbnail,
-            provider: newEmbed.data.provider,
-            author: newEmbed.data.author,
-            fields: newEmbed.data.fields,
-            video: newEmbed.data.video,
+        await interaction.reply({
+            content: `The queue has been created. ${message.url}`,
+            ephemeral: true
         });
-
-        try {
-        await createEmbed(embed);
-            await interaction.reply({
-                content: `The queue has been created. ${message.url}`,
-                ephemeral: true
-            });
-        } catch(error) {
-            mongoError(error as MongooseError);
-            await interaction.reply({
-                content: `There was an error creating the Embed record in the database.`,
-                ephemeral: true
-            });
-            return;
-        };
     } else {
         await interaction.reply({
             content: `There was no guild record found. Try using /srinitialize first.`,

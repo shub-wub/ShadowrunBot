@@ -1,8 +1,8 @@
 import { mongoError } from "#utilities";
-import { CommandInteraction, CacheType, ChannelType, MappedGuildChannelTypes, TextChannel } from "discord.js";
-import { createGuild, getGuildByGuildId, getPlayerByDiscordId } from "#operations";
+import { CommandInteraction, CacheType } from "discord.js";
+import { getPlayerByDiscordId } from "#operations";
 import Player from "../../schemas/player";
-import mongoose, { MongooseError } from "mongoose";
+import { MongooseError } from "mongoose";
 
 export const statRegister = async (interaction: CommandInteraction<CacheType>): Promise<void> => {
     var discordUser = interaction.options.getUser('discorduser');
@@ -31,6 +31,7 @@ export const statRegister = async (interaction: CommandInteraction<CacheType>): 
             friendlyFire: 0
         }).save();
     } catch(error) {
+        mongoError(error as MongooseError);
         await interaction.reply({
             content: `There was an error saving the record to the database.`,
             ephemeral: true

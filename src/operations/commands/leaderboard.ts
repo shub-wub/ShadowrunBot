@@ -6,10 +6,12 @@ import Leaderboard from '../../schemas/leaderboard';
 import { MongooseError } from "mongoose";
 
 // Define a function to create a message embed with a given page of players
-export const createLeaderboardEmbed = (/*interaction: CommandInteraction | ButtonInteraction,*/ pageNumber: number, players: IPlayer[], playersPerPage: number, device: string): any => {
+export const createLeaderboardEmbed = async (pageNumber: number, players: IPlayer[], playersPerPage: number, device: string, guildId: string): Promise<any> => {
     const start = (pageNumber - 1) * playersPerPage;
     const end = start + playersPerPage;
     const pagePlayers = players.slice(start, end);
+    const guildRecord = await Guild.findOne<IGuild>({ guildId: guildId });
+    if(!guildRecord) return;
     type Field = {
         name: string;
         value: string;
@@ -17,15 +19,23 @@ export const createLeaderboardEmbed = (/*interaction: CommandInteraction | Butto
       }
     var fields: Field[] = [];
 
-    /*fields.push({name: "Page", value: pageNumber.toString(), inline: true});
-    fields.push({name: "Device", value: device, inline: true});
-    fields.push({ name: '\u200b', value: '\u200b', inline: true });*/
-
     if (device == "mobile") {
         for (let i = 0; i < pagePlayers.length; i++) {
             const playerPlace = i + 1 + (10 * (pageNumber - 1));
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
-            fields.push({name: " ", value: `**${playerPlace}.** <@${pagePlayers[i].discordId}> - ${pagePlayers[i].rating} - ${wlr}`, inline: false});
+            var emoji = "";
+            if(pagePlayers[i].rating <= guildRecord.bronzeMax) {
+                emoji = `<:bronze:${guildRecord.bronzeEmojiId}>`;
+            } else if (pagePlayers[i].rating <= guildRecord.silverMax) {
+                emoji = `<:silver:${guildRecord.silverEmojiId}>`;
+            } else if (pagePlayers[i].rating <= guildRecord.goldMax) {
+                emoji = `<:gold:${guildRecord.goldEmojiId}>`;
+            } else if (pagePlayers[i].rating <= guildRecord.platinumMax) {
+                emoji = `<:platinum:${guildRecord.platinumEmojiId}>`;
+            } else if (pagePlayers[i].rating <= guildRecord.diamondMax) {
+                emoji = `<:diamond:${guildRecord.diamondEmojiId}>`;
+            }
+            fields.push({name: " ", value: `**${playerPlace}.** ${emoji} <@${pagePlayers[i].discordId}> - ${pagePlayers[i].rating} - ${wlr}`, inline: false});
         }
     } else if (device == "pc") {
         var names = "";
@@ -34,8 +44,20 @@ export const createLeaderboardEmbed = (/*interaction: CommandInteraction | Butto
         for (let i = 0; i < pagePlayers.length; i++) {
             const playerPlace = i + 1 + (10 * (pageNumber - 1));
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
+            var emoji = "";
+            if(pagePlayers[i].rating <= guildRecord.bronzeMax) {
+                emoji = `<:bronze:${guildRecord.bronzeEmojiId}>`;
+            } else if (pagePlayers[i].rating <= guildRecord.silverMax) {
+                emoji = `<:silver:${guildRecord.silverEmojiId}>`;
+            } else if (pagePlayers[i].rating <= guildRecord.goldMax) {
+                emoji = `<:gold:${guildRecord.goldEmojiId}>`;
+            } else if (pagePlayers[i].rating <= guildRecord.platinumMax) {
+                emoji = `<:platinum:${guildRecord.platinumEmojiId}>`;
+            } else if (pagePlayers[i].rating <= guildRecord.diamondMax) {
+                emoji = `<:diamond:${guildRecord.diamondEmojiId}>`;
+            }
             wlr = Math.round(wlr * 100) / 100
-            names += `**${playerPlace}.** <@${pagePlayers[i].discordId}>\n`;
+            names += `**${playerPlace}.** ${emoji} <@${pagePlayers[i].discordId}>\n`;
             ratings += `${pagePlayers[i].rating}\n`;
             winlossratio += `${wlr}\n`;
         }
@@ -70,7 +92,7 @@ export const createLeaderboardButtonRow = (pageNumber: number, players: IPlayer[
 
 export const leaderboard = async (interaction: CommandInteraction<CacheType>, client: Client, players: IPlayer[], playersPerPage: number, device: string): Promise<void> => {
     // Send the initial message with the first page of players and pagination buttons
-    const initialEmbed = createLeaderboardEmbed(1, players, playersPerPage, device);
+    const initialEmbed = await createLeaderboardEmbed(1, players, playersPerPage, device, interaction.guild?.id as string);
     const buttonRow = createLeaderboardButtonRow(1, players, playersPerPage);
     
     var guildRecord = await Guild.findOne<IGuild>({ guildId: interaction.guildId });

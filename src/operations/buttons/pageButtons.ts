@@ -25,7 +25,7 @@ export const pageButton = async (interaction: ButtonInteraction<CacheType>, dire
             ephemeral: true
         });
     }
-    const newEmbed = createLeaderboardEmbed(leaderboardRecord.page, players, playersPerPage, leaderboardRecord.device);
+    const newEmbed = await createLeaderboardEmbed(leaderboardRecord.page, players, playersPerPage, leaderboardRecord.device, interaction.guild?.id as string);
     const newButtonRow = createLeaderboardButtonRow(leaderboardRecord.page, players, playersPerPage);
     await interaction.update({ embeds: [newEmbed], components: [newButtonRow] });
 }

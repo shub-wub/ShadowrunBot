@@ -1,40 +1,56 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CacheType, Client, CommandInteraction, EmbedBuilder, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	CacheType,
+	Client,
+	CommandInteraction,
+	EmbedBuilder,
+	MessageActionRowComponentBuilder,
+	ModalBuilder,
+	ModalSubmitInteraction,
+	TextChannel,
+	TextInputBuilder,
+	TextInputStyle,
+} from "discord.js";
 import { getThemeColor } from "#utilities";
 import { IGuild } from "../../types";
-import Guild from '../../schemas/guild';
+import Guild from "@schemas/guild";
 
-export const openQueueModal = (interaction: CommandInteraction<CacheType>): void => {
-    const modal = new ModalBuilder()
-        .setCustomId('queue')
-        .setTitle('Create a queue')
-        .addComponents([
-        new ActionRowBuilder<TextInputBuilder>().addComponents([
-            new TextInputBuilder()
-                .setCustomId('maxPlayers')
-                .setLabel('Lobby Max Players')
-                .setValue('8')
-                .setRequired(true)
-                .setStyle(TextInputStyle.Short)
-        ]),
-        new ActionRowBuilder<TextInputBuilder>().addComponents([
-            new TextInputBuilder()
-                .setCustomId('ranked')
-                .setLabel('Ranked? yes/no')
-                .setValue("yes")
-                .setRequired(true)
-                .setStyle(TextInputStyle.Short)
-        ]),
-        new ActionRowBuilder<TextInputBuilder>().addComponents([
-            new TextInputBuilder()
-                .setCustomId('descriptionInput')
-                .setLabel('Queue Description')
-                .setRequired(false)
-                .setStyle(TextInputStyle.Paragraph)
-        ])
-    ]);
+export const openQueueModal = (
+	interaction: CommandInteraction<CacheType>
+): void => {
+	const modal = new ModalBuilder()
+		.setCustomId("queue")
+		.setTitle("Create a queue")
+		.addComponents([
+			new ActionRowBuilder<TextInputBuilder>().addComponents([
+				new TextInputBuilder()
+					.setCustomId("maxPlayers")
+					.setLabel("Lobby Max Players")
+					.setValue("8")
+					.setRequired(true)
+					.setStyle(TextInputStyle.Short),
+			]),
+			new ActionRowBuilder<TextInputBuilder>().addComponents([
+				new TextInputBuilder()
+					.setCustomId("ranked")
+					.setLabel("Ranked? yes/no")
+					.setValue("yes")
+					.setRequired(true)
+					.setStyle(TextInputStyle.Short),
+			]),
+			new ActionRowBuilder<TextInputBuilder>().addComponents([
+				new TextInputBuilder()
+					.setCustomId("descriptionInput")
+					.setLabel("Queue Description")
+					.setRequired(false)
+					.setStyle(TextInputStyle.Paragraph),
+			]),
+		]);
 
-    interaction.showModal(modal);
-}
+	interaction.showModal(modal);
+};
 
 export const submitQueueModal = async (interaction: ModalSubmitInteraction<CacheType>, client: Client): Promise<void> => {
     const newEmbed = new EmbedBuilder()

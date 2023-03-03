@@ -1,39 +1,30 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "module": "commonjs",
-        "rootDir": "./src/",
-        "outDir": "./dist/",
-        "strict": true,
-        "moduleResolution": "node",
-        "importHelpers": true,
-        "experimentalDecorators": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true,
-        "forceConsistentCasingInFileNames": true,
-        "removeComments": true,
-        "paths": {
-            "#operations": ["src/operations/exports"],
-            "#handlers": ["src/handlers/exports"],
-            "#utilities": ["src/utilities"]
-        },
-        "typeRoots": [
-            "node_modules/@types",
-            "./types"
-        ],
-        "sourceMap": false,
-        "baseUrl": "."
-    },
-    "files": [
-        "src/bot.ts"
-    ],
-    "include": [
-        "./**/*.ts"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist"
-    ],
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "commonjs",
+		"rootDir": "./src/",
+		"outDir": "./dist/",
+		"strict": true,
+		"moduleResolution": "node",
+		"importHelpers": true,
+		"experimentalDecorators": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"allowSyntheticDefaultImports": true,
+		"resolveJsonModule": true,
+		"forceConsistentCasingInFileNames": true,
+		"removeComments": true,
+		"paths": {
+			"#operations": ["src/operations/exports"],
+			"#handlers": ["src/handlers/exports"],
+			"#utilities": ["src/utilities"],
+			"@schemas/*": ["src/schemas/*"]
+		},
+		"typeRoots": ["node_modules/@types", "./types"],
+		"sourceMap": false,
+		"baseUrl": "."
+	},
+	"files": ["src/bot.ts"],
+	"include": ["./**/*.ts"],
+	"exclude": ["node_modules", "dist"]
 }

@@ -1,36 +1,45 @@
 {
-  "name": "botts",
-  "version": "1.0.0",
-  "description": "",
-  "main": "bot.js",
-  "scripts": {
-    "start": "tsc && node dist/bot.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shub-wub/ShadowrunBot.git"
-  },
-  "author": "Shub",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/shub-wub/ShadowrunBot/issues"
-  },
-  "homepage": "https://github.com/shub-wub/ShadowrunBot#readme",
-  "imports": {
-    "#operations": ["./dist/operations/exports.js"],
-    "#handlers": ["./dist/handlers/exports.js"],
-    "#utilities": ["./dist/utilities.js"]
-  },
-  "dependencies": {
-    "@types/node": "^18.13.0",
-    "chalk": "4.1.2",
-    "discord-api-types": "^0.37.33",
-    "discord.js": "^14.7.1",
-    "dotenv": "^16.0.3",
-    "mongoose": "^6.9.1",
-    "ts-node": "^10.9.1"
-  },
-  "devDependencies": {
-    "typescript": "^4.8.2"
-  }
+	"name": "botts",
+	"version": "1.0.0",
+	"description": "",
+	"main": "bot.js",
+	"scripts": {
+		"start": "tsc && node dist/bot.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/shub-wub/ShadowrunBot.git"
+	},
+	"author": "Shub",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/shub-wub/ShadowrunBot/issues"
+	},
+	"homepage": "https://github.com/shub-wub/ShadowrunBot#readme",
+	"imports": {
+		"#operations": [
+			"./dist/operations/exports.js"
+		],
+		"#handlers": [
+			"./dist/handlers/exports.js"
+		],
+		"#utilities": [
+			"./dist/utilities.js"
+		],
+		"@schemas*": [
+			"./dist/schemas/*.js"
+		]
+	},
+	"dependencies": {
+		"@types/node": "^18.13.0",
+		"chalk": "4.1.2",
+		"discord-api-types": "^0.37.33",
+		"discord.js": "^14.7.1",
+		"dotenv": "^16.0.3",
+		"mongoose": "^6.9.1",
+		"ts-node": "^10.9.1"
+	},
+	"devDependencies": {
+		"typescript": "^4.8.2"
+	}
 }

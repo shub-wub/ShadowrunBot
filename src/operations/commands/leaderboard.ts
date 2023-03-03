@@ -4,6 +4,7 @@ import { IGuild, IPlayer, ILeaderboard } from "../../types";
 import Guild from '../../schemas/guild';
 import Leaderboard from '../../schemas/leaderboard';
 import { MongooseError } from "mongoose";
+import { getRankEmoji } from "#operations";
 
 // Define a function to create a message embed with a given page of players
 export const createLeaderboardEmbed = async (pageNumber: number, players: IPlayer[], playersPerPage: number, device: string, guildId: string): Promise<any> => {
@@ -22,20 +23,12 @@ export const createLeaderboardEmbed = async (pageNumber: number, players: IPlaye
     if (device == "mobile") {
         for (let i = 0; i < pagePlayers.length; i++) {
             const playerPlace = i + 1 + (10 * (pageNumber - 1));
+
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
-            var emoji = "";
-            if(pagePlayers[i].rating <= guildRecord.bronzeMax) {
-                emoji = `<:bronze:${guildRecord.bronzeEmojiId}>`;
-            } else if (pagePlayers[i].rating <= guildRecord.silverMax) {
-                emoji = `<:silver:${guildRecord.silverEmojiId}>`;
-            } else if (pagePlayers[i].rating <= guildRecord.goldMax) {
-                emoji = `<:gold:${guildRecord.goldEmojiId}>`;
-            } else if (pagePlayers[i].rating <= guildRecord.platinumMax) {
-                emoji = `<:platinum:${guildRecord.platinumEmojiId}>`;
-            } else if (pagePlayers[i].rating <= guildRecord.diamondMax) {
-                emoji = `<:diamond:${guildRecord.diamondEmojiId}>`;
-            }
-            fields.push({name: " ", value: `**${playerPlace}.** ${emoji} <@${pagePlayers[i].discordId}> - ${pagePlayers[i].rating} - ${wlr}`, inline: false});
+
+            var emoji = getRankEmoji(pagePlayers[i], guildRecord);
+
+            fields.push({name: " ", value: `**${playerPlace}.** <@${pagePlayers[i].discordId}> - ${emoji}${pagePlayers[i].rating} - ${wlr}`, inline: false});
         }
     } else if (device == "pc") {
         var names = "";
@@ -43,22 +36,14 @@ export const createLeaderboardEmbed = async (pageNumber: number, players: IPlaye
         var winlossratio = "";
         for (let i = 0; i < pagePlayers.length; i++) {
             const playerPlace = i + 1 + (10 * (pageNumber - 1));
+
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
-            var emoji = "";
-            if(pagePlayers[i].rating <= guildRecord.bronzeMax) {
-                emoji = `<:bronze:${guildRecord.bronzeEmojiId}>`;
-            } else if (pagePlayers[i].rating <= guildRecord.silverMax) {
-                emoji = `<:silver:${guildRecord.silverEmojiId}>`;
-            } else if (pagePlayers[i].rating <= guildRecord.goldMax) {
-                emoji = `<:gold:${guildRecord.goldEmojiId}>`;
-            } else if (pagePlayers[i].rating <= guildRecord.platinumMax) {
-                emoji = `<:platinum:${guildRecord.platinumEmojiId}>`;
-            } else if (pagePlayers[i].rating <= guildRecord.diamondMax) {
-                emoji = `<:diamond:${guildRecord.diamondEmojiId}>`;
-            }
-            wlr = Math.round(wlr * 100) / 100
-            names += `**${playerPlace}.** ${emoji} <@${pagePlayers[i].discordId}>\n`;
-            ratings += `${pagePlayers[i].rating}\n`;
+
+            var emoji = getRankEmoji(pagePlayers[i], guildRecord);
+
+            wlr = Math.round(wlr * 100) / 100;
+            names += `**${playerPlace}.** <@${pagePlayers[i].discordId}>\n`;
+            ratings += `${emoji}${pagePlayers[i].rating}\n`;
             winlossratio += `${wlr}\n`;
         }
         fields.push({name: "Name", value: names, inline: true});

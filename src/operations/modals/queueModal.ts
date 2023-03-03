@@ -62,28 +62,13 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
                 .setCustomId('removeQueue')
                 .setLabel('Remove Me')
                 .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-                .setCustomId('requeue')
-                .setLabel('Requeue')
-                .setStyle(ButtonStyle.Danger),
-            ]);
-    const activeButtonRow2 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
-        .addComponents([
-            new ButtonBuilder()
-                .setCustomId('ready-player')
-                .setLabel('Ready Up Player')
-                .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                .setCustomId('queue-player')
-                .setLabel('Queue Player')
-                .setStyle(ButtonStyle.Success),
             ]);
     var guildRecord = await Guild.findOne<IGuild>({ guildId: interaction.guildId });
     if(guildRecord) {
         var channel = await client.channels.fetch(guildRecord.queueChannelId);
         var message = await (channel as TextChannel).send({
             embeds: [newEmbed], 
-            components: [activeButtonRow1, activeButtonRow2]
+            components: [activeButtonRow1]
         });
         await interaction.reply({
             content: `The queue has been created. ${message.url}`,

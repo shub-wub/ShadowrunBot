@@ -1,6 +1,6 @@
 import { mongoError } from "#utilities";
 import { CommandInteraction, CacheType } from "discord.js";
-import Player from "@schemas/player";
+import Player from "#schemas/player";
 import { MongooseError } from "mongoose";
 import { IPlayer } from "../../types";
 

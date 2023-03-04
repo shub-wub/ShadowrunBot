@@ -1,8 +1,8 @@
 import { mongoError } from "#utilities";
 import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder} from "discord.js";
-import Queue from "../../schemas/queue";
+import Queue from "../../schemas/queuePlayer";
 import Player from "../../schemas/player";
-import { IPlayer, IQueue } from "../../types";
+import { IPlayer, IQueuePlayer } from "../../types";
 import { MongooseError } from "mongoose";
 
 export const joinQueue = (interaction: ButtonInteraction<CacheType>): void => {
@@ -10,10 +10,10 @@ export const joinQueue = (interaction: ButtonInteraction<CacheType>): void => {
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
 
     const playerQuery = Player.findOne<IPlayer>({ discordId: interaction.user.id });
-    const queueQuery = Queue.find<IQueue>().and([{ messageId: interaction.message.id}, { discordId: interaction.user.id}]);
-    const queuePlayers = Queue.find<IQueue>({ messageId: interaction.message.id });
+    const queueQuery = Queue.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: interaction.user.id}]);
+    const queuePlayers = Queue.find<IQueuePlayer>({ messageId: interaction.message.id });
 
-    Promise.all([playerQuery, queueQuery, queuePlayers]).then(async (queryResults: [IPlayer | null, IQueue[], IQueue[]]) => {
+    Promise.all([playerQuery, queueQuery, queuePlayers]).then(async (queryResults: [IPlayer | null, IQueuePlayer[], IQueuePlayer[]]) => {
         if (!queryResults[0]) {
             await interaction.reply({
                 content: `You must first do /statregister before you can play ranked.`,

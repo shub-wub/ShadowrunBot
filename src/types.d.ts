@@ -83,10 +83,16 @@ export interface IPlayer extends mongoose.Document {
     isBanned: boolean
 }
 
-export interface IQueue extends mongoose.Document {
+export interface IQueuePlayer extends mongoose.Document {
     discordId: string,
     messageId: string,
     ready: boolean
+}
+
+export interface IQueue extends mongoose.Document {
+    messageId: string,
+    rankMin: number,
+    rankMax: number
 }
 
 export interface ILeaderboard extends mongoose.Document {

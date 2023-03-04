@@ -12,8 +12,8 @@ import {
 	ButtonInteraction,
 } from "discord.js";
 import { IGuild, IPlayer, ILeaderboard } from "../../types";
-import Guild from "@schemas/guild";
-import Leaderboard from "@schemas/leaderboard";
+import Guild from "#schemas/guild";
+import Leaderboard from "#schemas/leaderboard";
 import { MongooseError } from "mongoose";
 import { getRankEmoji } from "#operations";
 

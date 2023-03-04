@@ -8,7 +8,7 @@ import {
 	Role,
 	TextChannel,
 } from "discord.js";
-import Guild from "@schemas/guild";
+import Guild from "#schemas/guild";
 import { MongooseError } from "mongoose";
 import { IGuild } from "../../types";
 

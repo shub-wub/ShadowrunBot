@@ -1,7 +1,7 @@
 import { Client, CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { SlashCommand } from "../types";
 import { leaderboard } from "#operations";
-import Player from "@schemas/player";
+import Player from "#schemas/player";
 
 const command: SlashCommand = {
 	data: new SlashCommandBuilder()

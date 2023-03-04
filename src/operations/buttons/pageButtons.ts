@@ -3,9 +3,9 @@ import {
 	createLeaderboardButtonRow,
 	createLeaderboardEmbed,
 } from "#operations";
-import Player from "@schemas/player";
+import Player from "#schemas/player";
 import { ILeaderboard } from "src/types";
-import Leaderboard from "@schemas/leaderboard";
+import Leaderboard from "#schemas/leaderboard";
 import { mongoError } from "#utilities";
 import { MongooseError } from "mongoose";
 

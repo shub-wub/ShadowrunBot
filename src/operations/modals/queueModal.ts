@@ -13,9 +13,11 @@ import {
 	TextInputBuilder,
 	TextInputStyle,
 } from "discord.js";
-import { getThemeColor } from "#utilities";
+import { getThemeColor, mongoError } from "#utilities";
 import { IGuild } from "../../types";
-import Guild from "@schemas/guild";
+import Guild from "#schemas/guild";
+import Queue from "#schemas/queue";
+import { MongooseError } from "mongoose";
 
 export const openQueueModal = (
 	interaction: CommandInteraction<CacheType>
@@ -26,26 +28,19 @@ export const openQueueModal = (
 		.addComponents([
 			new ActionRowBuilder<TextInputBuilder>().addComponents([
 				new TextInputBuilder()
-					.setCustomId("maxPlayers")
-					.setLabel("Lobby Max Players")
-					.setValue("8")
+					.setCustomId("maxRank")
+					.setLabel("Max Rank")
+					.setValue("3000")
 					.setRequired(true)
 					.setStyle(TextInputStyle.Short),
 			]),
-			new ActionRowBuilder<TextInputBuilder>().addComponents([
+            new ActionRowBuilder<TextInputBuilder>().addComponents([
 				new TextInputBuilder()
-					.setCustomId("ranked")
-					.setLabel("Ranked? yes/no")
-					.setValue("yes")
+					.setCustomId("minRank")
+					.setLabel("Min Rank")
+					.setValue("0")
 					.setRequired(true)
 					.setStyle(TextInputStyle.Short),
-			]),
-			new ActionRowBuilder<TextInputBuilder>().addComponents([
-				new TextInputBuilder()
-					.setCustomId("descriptionInput")
-					.setLabel("Queue Description")
-					.setRequired(false)
-					.setStyle(TextInputStyle.Paragraph),
 			]),
 		]);
 
@@ -53,8 +48,10 @@ export const openQueueModal = (
 };
 
 export const submitQueueModal = async (interaction: ModalSubmitInteraction<CacheType>, client: Client): Promise<void> => {
+    var min = interaction.fields.getTextInputValue("minRank");
+    var max = interaction.fields.getTextInputValue("maxRank");
     const newEmbed = new EmbedBuilder()
-        .setTitle('Queue')
+        .setTitle(`${min}-${max} Queue`)
         .setColor(getThemeColor("embed"))
         .addFields([
             {
@@ -86,6 +83,20 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
             embeds: [newEmbed], 
             components: [activeButtonRow1]
         });
+        try {
+            await new Queue({
+                messageId: message.id,
+                rankMin: min,
+                rankMax: max
+            }).save();
+        } catch (error) {
+            mongoError(error as MongooseError);
+            await interaction.reply({
+                content: `There was an error saving the Queue record to the database.`,
+                ephemeral: true,
+            });
+            return;
+        }
         await interaction.reply({
             content: `The queue has been created. ${message.url}`,
             ephemeral: true

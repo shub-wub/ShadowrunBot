@@ -18,7 +18,7 @@
 			"#operations": ["src/operations/exports"],
 			"#handlers": ["src/handlers/exports"],
 			"#utilities": ["src/utilities"],
-			"@schemas/*": ["src/schemas/*"]
+			"#schemas/*": ["src/schemas/*"]
 		},
 		"typeRoots": ["node_modules/@types", "./types"],
 		"sourceMap": false,

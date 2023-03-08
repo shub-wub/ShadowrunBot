@@ -12,9 +12,7 @@ import Guild from "#schemas/guild";
 import { MongooseError } from "mongoose";
 import { IGuild } from "../../types";
 
-export const srinitialize = async (
-	interaction: CommandInteraction<CacheType>
-): Promise<void> => {
+export const srinitialize = async (interaction: CommandInteraction<CacheType>): Promise<void> => {
 	const existingGuildRecord = await Guild.findOne<IGuild>({
 		guildId: interaction.guildId,
 	});

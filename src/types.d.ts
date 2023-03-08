@@ -66,6 +66,12 @@ declare global {
     }
 }
 
+export type Field = {
+    name: string;
+    value: string;
+    inline: boolean;
+};
+
 
 /*-----------------------------------------------------------------------------------------------
         Schema Types
@@ -86,6 +92,7 @@ export interface IPlayer extends mongoose.Document {
 export interface IQueuePlayer extends mongoose.Document {
     discordId: string,
     messageId: string,
+    matchMessageId: string,
     ready: boolean
 }
 
@@ -95,10 +102,25 @@ export interface IQueue extends mongoose.Document {
     rankMax: number
 }
 
+export interface IMatch extends mongoose.Document {
+    messageId: string,
+    winner: string,
+    rnaG1Rounds: number,
+    rnaG2Rounds: number,
+    rnaG3Rounds: number,
+    lineageG1Rounds: number,
+    lineageG2Rounds: number,
+    lineageG3Rounds: number,
+}
+
 export interface ILeaderboard extends mongoose.Document {
     messageId: string,
     device: string,
     page: number;
+}
+
+export interface IMap extends mongoose.Document {
+    name: string
 }
 
 export interface IGuild extends mongoose.Document {

@@ -76,12 +76,23 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
                 .setLabel('Remove Me')
                 .setStyle(ButtonStyle.Danger),
             ]);
+    const activeButtonRow2 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
+            .addComponents([
+                new ButtonBuilder()
+                    .setCustomId('readyUpPlayer')
+                    .setLabel('Ready Up Player')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('queuePlayer')
+                    .setLabel('Queue Player')
+                    .setStyle(ButtonStyle.Danger),
+                ]);
     var guildRecord = await Guild.findOne<IGuild>({ guildId: interaction.guildId });
     if(guildRecord) {
         var channel = await client.channels.fetch(guildRecord.queueChannelId);
         var message = await (channel as TextChannel).send({
             embeds: [newEmbed], 
-            components: [activeButtonRow1]
+            components: [activeButtonRow1, activeButtonRow2]
         });
         try {
             await new Queue({

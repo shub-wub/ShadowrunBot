@@ -4,6 +4,7 @@ import { IQueuePlayer } from "../types";
 const queuePlayerSchema = new Schema<IQueuePlayer>({
     discordId: String,
     messageId: String,
+    matchMessageId: String,
     ready: Boolean
 });
 

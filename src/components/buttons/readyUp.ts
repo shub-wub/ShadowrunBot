@@ -3,10 +3,10 @@ import { Button } from 'src/types';
 
 const button: Button = {
     data: {
-        name: 'queue'
+        name: 'readyup'
     },
     execute: async (interaction, client) => {
-        processQueue(interaction, client, false);
+        processQueue(interaction, client, true);
     },
     //cooldown: 10
 }

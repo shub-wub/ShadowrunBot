@@ -11,7 +11,7 @@ import {
 	BaseInteraction,
 	ButtonInteraction,
 } from "discord.js";
-import { IGuild, IPlayer, ILeaderboard } from "../../types";
+import { IGuild, IPlayer, ILeaderboard, Field } from "../../types";
 import Guild from "#schemas/guild";
 import Leaderboard from "#schemas/leaderboard";
 import { MongooseError } from "mongoose";
@@ -30,11 +30,6 @@ export const createLeaderboardEmbed = async (
 	const pagePlayers = players.slice(start, end);
 	const guildRecord = await Guild.findOne<IGuild>({ guildId: guildId });
 	if (!guildRecord) return;
-	type Field = {
-		name: string;
-		value: string;
-		inline: boolean;
-	};
 	var fields: Field[] = [];
 
     if (device == "mobile") {

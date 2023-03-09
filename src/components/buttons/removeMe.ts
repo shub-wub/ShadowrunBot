@@ -1,12 +1,12 @@
-import { processQueue } from '#operations';
+import { removeUserFromQueue } from '#operations';
 import { Button } from 'src/types';
 
 const button: Button = {
     data: {
-        name: 'queue'
+        name: 'removeQueue'
     },
     execute: async (interaction, client) => {
-        processQueue(interaction, client, false);
+        removeUserFromQueue(interaction, client);
     },
     //cooldown: 10
 }

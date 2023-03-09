@@ -14,7 +14,7 @@ const event: BotEvent = {
                 console.error(`No command matching ${commandName} was found.`);
                 return;
             }
-            if (command.cooldown && cooldown) {
+            /*if (command.cooldown && cooldown) {
                 if (Date.now() < cooldown) {
                     await interaction.reply({
                         content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this command again.`,
@@ -29,7 +29,7 @@ const event: BotEvent = {
                 }, command.cooldown * 1000);
             } else if (command.cooldown && !cooldown) {
                 cooldowns.set(`${commandName}-${type}-${user.username}`, Date.now() + command.cooldown * 1000);
-            }
+            }*/
             try {
                 command.execute(interaction, client);
             } catch (error) {
@@ -49,7 +49,7 @@ const event: BotEvent = {
                 console.error(`There is no code for this button.`);
                 return;
             }
-            if (button.cooldown && cooldown) {
+            /*if (button.cooldown && cooldown) {
                 if (Date.now() < cooldown) {
                     await interaction.reply({
                         content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this button again.`,
@@ -64,7 +64,7 @@ const event: BotEvent = {
                 }, button.cooldown * 1000);
             } else if (button.cooldown && !cooldown) {
                 cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
-            }
+            }*/
 
             try {
                 button.execute(interaction, client);
@@ -113,7 +113,7 @@ const event: BotEvent = {
                 console.error(`There is no code for this modal`);
                 return;
             }
-            if (modal.cooldown && cooldown) {
+            /*if (modal.cooldown && cooldown) {
                 if (Date.now() < cooldown) {
                     await interaction.reply({
                         content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this modal again.`,
@@ -128,7 +128,7 @@ const event: BotEvent = {
                 }, modal.cooldown * 1000);
             } else if (modal.cooldown && !cooldown) {
                 cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + modal.cooldown * 1000);
-            }
+            }*/
 
             try {
                 modal.execute(interaction, client);

@@ -105,12 +105,15 @@ export interface IQueue extends mongoose.Document {
 export interface IMatch extends mongoose.Document {
     messageId: string,
     winner: string,
-    rnaG1Rounds: number,
-    rnaG2Rounds: number,
-    rnaG3Rounds: number,
-    lineageG1Rounds: number,
-    lineageG2Rounds: number,
-    lineageG3Rounds: number,
+    map1: string,
+    map2: string,
+    map3: string,
+    team1G1Rounds: number,
+    team1G2Rounds: number,
+    team1G3Rounds: number,
+    team2G1Rounds: number,
+    team2G2Rounds: number,
+    team2G3Rounds: number,
 }
 
 export interface ILeaderboard extends mongoose.Document {

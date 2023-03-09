@@ -9,8 +9,9 @@ import {
 	TextChannel,
 } from "discord.js";
 import Guild from "#schemas/guild";
+import Map from "#schemas/map";
 import { MongooseError } from "mongoose";
-import { IGuild } from "../../types";
+import { IGuild, IMap } from "../../types";
 
 export const srinitialize = async (interaction: CommandInteraction<CacheType>): Promise<void> => {
 	const existingGuildRecord = await Guild.findOne<IGuild>({
@@ -97,6 +98,13 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		parent: cat.id,
 	});
 
+	const lobbyCreate = new Map({ name: "Lobby Small (Attrition)" }).save();
+	const nerveCenterCreate = new Map({ name: "Nerve Center Small (Attrition)" }).save();
+	const pinnacleCreate = new Map({ name: "Pinnacle (Attrition)" }).save();
+	const powerStationCreate = new Map({ name: "Power Station (Attrition)" }).save();
+	const favelaAttritionCreate = new Map({ name: "Favela (Attrition)" }).save();
+	const favelaExtractionCreate = new Map({ name: "Favela (Extraction)" }).save();
+
 	Promise.all([
 		queueChannelCreate as Promise<TextChannel>,
 		matchChannelCreate as Promise<TextChannel>,
@@ -111,6 +119,12 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		goldRoleCreate as Promise<Role>,
 		platinumRoleCreate as Promise<Role>,
 		diamondRoleCreate as Promise<Role>,
+		lobbyCreate,
+		nerveCenterCreate,
+		pinnacleCreate,
+		powerStationCreate,
+		favelaAttritionCreate,
+		favelaExtractionCreate
 	]).then(async (results) => {
 		try {
 			await new Guild({

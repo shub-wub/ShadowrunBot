@@ -9,15 +9,15 @@ import {
 	MessageActionRowComponentBuilder,
     Client,
     TextChannel,
-    ModalSubmitInteraction,
 } from "discord.js";
 import QueuePlayer from "#schemas/queuePlayer";
 import Player from "#schemas/player";
 import Guild from "#schemas/guild";
 import Queue from "#schemas/queue";
 import Match from "#schemas/match";
-import { Field, IGuild, IPlayer, IQueue, IQueuePlayer } from "../../types";
-import { MongooseError, Types } from "mongoose";
+import Map from "#schemas/map";
+import { Field, IGuild, IPlayer, IQueue, IQueuePlayer, IMap } from "../../types";
+import { MongooseError } from "mongoose";
 import { generateTeams, getRankEmoji } from "#operations";
 
 export const processQueue = (interaction: ButtonInteraction, client: Client, playerReady = false, overridePlayer?: string): void => {
@@ -144,96 +144,146 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, client
     });
 }
 
-export const createMatchEmbed = (rnaPlayers: IPlayer[], lineagePlayers: IPlayer[], guildRecord: IGuild): any => {
-    var rna = "";
-    var lineage = "";
-    var rnaTotal = 0;
-    var lineageTotal = 0;
+export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[], guildRecord: IGuild, maps: IMap[]): any => {
+    var team1 = "";
+    var team2 = "";
+    var team1Total = 0;
+    var team2Total = 0;
     var fields: Field[] = [];
-    for (let i = 0; i < rnaPlayers.length; i++) {
-        var emoji = getRankEmoji(rnaPlayers[i], guildRecord);
-        rnaTotal += rnaPlayers[i].rating;
-        rna += `<@${rnaPlayers[i].discordId}> ${emoji}${rnaPlayers[i].rating}\n`;
+    for (let i = 0; i < team1Players.length; i++) {
+        var emoji = getRankEmoji(team1Players[i], guildRecord);
+        team1Total += team1Players[i].rating;
+        team1 += `<@${team1Players[i].discordId}> ${emoji}${team1Players[i].rating}\n`;
     }
-    for (let i = 0; i < lineagePlayers.length; i++) {
-        var emoji = getRankEmoji(lineagePlayers[i], guildRecord);
-        lineageTotal += lineagePlayers[i].rating;
-        lineage += `<@${lineagePlayers[i].discordId}> ${emoji}${lineagePlayers[i].rating}\n`;
+    for (let i = 0; i < team2Players.length; i++) {
+        var emoji = getRankEmoji(team2Players[i], guildRecord);
+        team2Total += team2Players[i].rating;
+        team2 += `<@${team2Players[i].discordId}> ${emoji}${team2Players[i].rating}\n`;
     }
-    fields.push({name: `RNA(${rnaTotal})`, value: rna, inline: true});
-    fields.push({name: `Lineage(${lineageTotal})`, value: lineage, inline: true});
+    fields.push({name: `Maps`, value: `${maps[0].name}\n${maps[1].name}\n${maps[2].name}`, inline: false});
+    fields.push({name: `Team 1(${team1Total})`, value: team1, inline: true});
+    fields.push({name: `Team 2(${team2Total})`, value: team2, inline: true});
+    var randomTeam = Math.floor(Math.random() * 2) + 1;
     const embed: any = new EmbedBuilder()
-        .setTitle(`RNA(${rnaTotal}) - LINEAGE(${lineageTotal})`)
+        .setTitle(`Team ${randomTeam} picks server and side first`)
         .setColor(getThemeColor("embed"))
         .addFields(fields);
     return embed;
 };
 
 
-export const createMatchButtonRow = (): ActionRowBuilder<ButtonBuilder> => {
+export const createMatchButtonRow1 = (): ActionRowBuilder<ButtonBuilder> => {
 	const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
-	const rnaGame1Button = new ButtonBuilder()
-		.setCustomId("scoregame1")
-		.setLabel("Score Game 1")
+	const team1Game1Button = new ButtonBuilder()
+		.setCustomId("scoret1g1")
+		.setLabel("Score T1G1")
 		.setStyle(ButtonStyle.Primary);
-    const rnaGame2Button = new ButtonBuilder()
-		.setCustomId("scoregame2")
-		.setLabel("Score Game 2")
+    const team1Game2Button = new ButtonBuilder()
+		.setCustomId("scoret1g2")
+		.setLabel("Score T1G2")
+        .setDisabled(true)
 		.setStyle(ButtonStyle.Primary);
-    const rnaGame3Button = new ButtonBuilder()
-		.setCustomId("scoregame3")
-		.setLabel("Score Game 3")
+    const team1Game3Button = new ButtonBuilder()
+		.setCustomId("scoret1g3")
+		.setLabel("Score T1G3")
+        .setDisabled(true)
 		.setStyle(ButtonStyle.Primary);
-	buttonRow.addComponents(rnaGame1Button, rnaGame2Button, rnaGame3Button);
+	buttonRow.addComponents(team1Game1Button, team1Game2Button, team1Game3Button);
+	return buttonRow;
+};
+export const createMatchButtonRow2 = (): ActionRowBuilder<ButtonBuilder> => {
+	const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
+    const team2Game1Button = new ButtonBuilder()
+        .setCustomId("scoret2g1")
+        .setLabel("Score T2G1")
+        .setStyle(ButtonStyle.Danger);
+    const team2Game2Button = new ButtonBuilder()
+        .setCustomId("scoret2g2")
+        .setLabel("Score T2G2")
+        .setDisabled(true)
+        .setStyle(ButtonStyle.Danger);
+    const team2Game3Button = new ButtonBuilder()
+        .setCustomId("scoret2g3")
+        .setLabel("Score T2G3")
+        .setDisabled(true)
+        .setStyle(ButtonStyle.Danger);
+    buttonRow.addComponents(team2Game1Button, team2Game2Button, team2Game3Button);
 	return buttonRow;
 };
 
 export const createMatch = async (interaction: ButtonInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[]): Promise<void> => {
-    var players: IPlayer[] = [];
-    for (let i = 0; i < queuePlayers.length; i++) {
-        var player = await Player.findOne<IPlayer>({ discordId: queuePlayers[i].discordId });
-        if(!player) return;
-        players.push(player);
-    }
+    const playersQuery = Player.find({ discordId: { $in: queuePlayers.map(qp => qp.discordId) } });
+    const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
+    const mapQuery = Map.find<IMap>();
 
-    var guildRecord = await Guild.findOne<IGuild>({
-		guildId: interaction.guildId,
-	});
-	if (guildRecord) {
-        var teams = generateTeams(players);
-        const initialEmbed = createMatchEmbed(teams[1], teams[0], guildRecord);
-        const buttonRow = createMatchButtonRow();
+    Promise.all([playersQuery, guildQuery, mapQuery])
+    .then(async (queryResults: [IPlayer[], IGuild | null, IMap[]]) => {
+        if (queryResults[0].length !== queuePlayers.length) {
+            console.log("Not all players were found.")
+            return;
+        }
+        if (!queryResults[1]) {
+            await interaction.reply({
+                content: `There was no guild record found. Try using /srinitialize first.`,
+                ephemeral: true,
+            });
+            return;
+        }
 
-		var channel = await client.channels.fetch(
-			guildRecord.matchChannelId
-		);
-		var message = await (channel as TextChannel).send({
-			embeds: [initialEmbed],
-			components: [buttonRow],
-		});
+        // Generate 3 random indices without repetition
+        var maps: IMap[] = [];
+        const indices = new Set<number>();
+        while (indices.size < 3) {
+            const index = Math.floor(Math.random() * queryResults[2].length);
+            if (!indices.has(index))
+                indices.add(index);
+        }
 
-		try {
-			await new Match({
-				messageId: message.id,
-			}).save();
+        // Add the randomly selected maps to the 'maps' array
+        for (const index of indices)
+            maps.push(queryResults[2][index]);
+
+
+        var teams = generateTeams(queryResults[0]);
+        const initialEmbed = createMatchEmbed(teams[1], teams[0], queryResults[1], maps);
+        const buttonRow1 = createMatchButtonRow1();
+        const buttonRow2 = createMatchButtonRow2();
+
+        var channel = await client.channels.fetch(
+            queryResults[1].matchChannelId
+        );
+        var message = await (channel as TextChannel).send({
+            embeds: [initialEmbed],
+            components: [buttonRow1, buttonRow2],
+        });
+
+        try {
+            await new Match({
+                messageId: message.id,
+                map1: maps[0].name,
+                map2: maps[1].name,
+                map3: maps[2].name
+            }).save();
             queuePlayers.forEach(async p => {
                 p.matchMessageId = message.id;
                 await p.save();
             });
-		} catch (error) {
-			mongoError(error as MongooseError);
-			await interaction.reply({
-				content: `There was an error adding the match to the database.`,
-				ephemeral: true,
-			});
-			return;
-		}
-	} else {
-		await interaction.reply({
-			content: `There was no guild record found. Try using /srinitialize first.`,
-			ephemeral: true,
-		});
-	}
+        } catch (error) {
+            mongoError(error as MongooseError);
+            await interaction.reply({
+                content: `There was an error adding the match to the database.`,
+                ephemeral: true,
+            });
+            return;
+        }
+    }).catch(async error => {
+        mongoError(error);
+        await interaction.reply({
+            content: `There was an error getting data from the database for the match.`,
+            ephemeral: true
+        });
+        return;
+    });
 }
 
 export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queuePlayers: string, queueCount: number, disableReadyButton: boolean): Promise<void> => {

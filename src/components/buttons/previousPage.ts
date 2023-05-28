@@ -1,5 +1,5 @@
 import { pageButton } from '#operations';
-import { Button } from 'src/types';
+import { Button } from '../../types';
 
 const button: Button = {
     data: {

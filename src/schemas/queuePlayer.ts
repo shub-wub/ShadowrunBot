@@ -5,6 +5,7 @@ const queuePlayerSchema = new Schema<IQueuePlayer>({
     discordId: String,
     messageId: String,
     matchMessageId: String,
+    team: Number,
     ready: Boolean
 });
 

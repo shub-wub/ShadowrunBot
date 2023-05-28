@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
-import { Button } from 'src/types';
+import { Button } from '../../types';
 
 const button: Button = {
     data: {

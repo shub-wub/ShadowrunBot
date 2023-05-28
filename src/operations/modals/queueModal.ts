@@ -19,9 +19,7 @@ import Guild from "#schemas/guild";
 import Queue from "#schemas/queue";
 import { MongooseError } from "mongoose";
 
-export const openQueueModal = (
-	interaction: CommandInteraction<CacheType>
-): void => {
+export const openQueueModal = (interaction: CommandInteraction<CacheType>): void => {
 	const modal = new ModalBuilder()
 		.setCustomId("queue")
 		.setTitle("Create a queue")
@@ -43,7 +41,6 @@ export const openQueueModal = (
 					.setStyle(TextInputStyle.Short),
 			]),
 		]);
-
 	interaction.showModal(modal);
 };
 

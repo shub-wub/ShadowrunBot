@@ -40,13 +40,13 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 });
                 return;
             }
-            /*if (queryResults[1].length > 0) {
+            if (queryResults[1].length > 0) {
                 await interaction.reply({
                     content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
                     ephemeral: true
                 });
                 return;
-            }*/
+            }
             if (!queryResults[4]) return;
             if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
                 await interaction.reply({
@@ -171,41 +171,42 @@ export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[
     return embed;
 };
 
-
-export const createMatchButtonRow1 = (): ActionRowBuilder<ButtonBuilder> => {
+export const createMatchButtonRow1 = (g1: boolean, g2: boolean, g3: boolean): ActionRowBuilder<ButtonBuilder> => {
 	const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
 	const team1Game1Button = new ButtonBuilder()
 		.setCustomId("scoret1g1")
 		.setLabel("Score T1G1")
+        .setDisabled(g1)
 		.setStyle(ButtonStyle.Primary);
     const team1Game2Button = new ButtonBuilder()
 		.setCustomId("scoret1g2")
 		.setLabel("Score T1G2")
-        .setDisabled(true)
+        .setDisabled(g2)
 		.setStyle(ButtonStyle.Primary);
     const team1Game3Button = new ButtonBuilder()
 		.setCustomId("scoret1g3")
 		.setLabel("Score T1G3")
-        .setDisabled(true)
+        .setDisabled(g3)
 		.setStyle(ButtonStyle.Primary);
 	buttonRow.addComponents(team1Game1Button, team1Game2Button, team1Game3Button);
 	return buttonRow;
 };
-export const createMatchButtonRow2 = (): ActionRowBuilder<ButtonBuilder> => {
+export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): ActionRowBuilder<ButtonBuilder> => {
 	const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
     const team2Game1Button = new ButtonBuilder()
         .setCustomId("scoret2g1")
         .setLabel("Score T2G1")
+        .setDisabled(g1)
         .setStyle(ButtonStyle.Danger);
     const team2Game2Button = new ButtonBuilder()
         .setCustomId("scoret2g2")
         .setLabel("Score T2G2")
-        .setDisabled(true)
+        .setDisabled(g2)
         .setStyle(ButtonStyle.Danger);
     const team2Game3Button = new ButtonBuilder()
         .setCustomId("scoret2g3")
         .setLabel("Score T2G3")
-        .setDisabled(true)
+        .setDisabled(g3)
         .setStyle(ButtonStyle.Danger);
     buttonRow.addComponents(team2Game1Button, team2Game2Button, team2Game3Button);
 	return buttonRow;
@@ -246,8 +247,8 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
 
         var teams = generateTeams(queryResults[0]);
         const initialEmbed = createMatchEmbed(teams[1], teams[0], queryResults[1], maps);
-        const buttonRow1 = createMatchButtonRow1();
-        const buttonRow2 = createMatchButtonRow2();
+        const buttonRow1 = createMatchButtonRow1(false, true, true);
+        const buttonRow2 = createMatchButtonRow2(false, true, true);
 
         var channel = await client.channels.fetch(
             queryResults[1].matchChannelId
@@ -262,12 +263,29 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
                 messageId: message.id,
                 map1: maps[0].name,
                 map2: maps[1].name,
-                map3: maps[2].name
+                map3: maps[2].name,
+                team1ReportedT1G1Rounds: 0,
+                team1ReportedT1G2Rounds: 0,
+                team1ReportedT1G3Rounds: 0,
+                team1ReportedT2G1Rounds: 0,
+                team1ReportedT2G2Rounds: 0,
+                team1ReportedT2G3Rounds: 0,
+                team2ReportedT1G1Rounds: 0,
+                team2ReportedT1G2Rounds: 0,
+                team2ReportedT1G3Rounds: 0,
+                team2ReportedT2G1Rounds: 0,
+                team2ReportedT2G2Rounds: 0,
+                team2ReportedT2G3Rounds: 0
             }).save();
-            queuePlayers.forEach(async p => {
-                p.matchMessageId = message.id;
-                await p.save();
-            });
+            await Promise.all(queuePlayers.map(qp => {
+                qp.matchMessageId = message.id;
+                var team1Player = teams[1].find(p => p.discordId == qp.discordId);
+                if(team1Player)
+                    qp.team = 1;
+                else
+                    qp.team = 2;
+                return qp.save();
+              }));
         } catch (error) {
             mongoError(error as MongooseError);
             await interaction.reply({

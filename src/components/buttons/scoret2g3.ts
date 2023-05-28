@@ -1,12 +1,12 @@
-import { pageButton } from '#operations';
+import { scoreMatch } from '#operations';
 import { Button } from '../../types';
 
 const button: Button = {
     data: {
-        name: 'next'
+        name: 'scoret2g3'
     },
     execute: async (interaction, client) => {
-        pageButton(interaction, "next");
+        scoreMatch(interaction, client, 2, 3);
     },
     //cooldown: 10
 }

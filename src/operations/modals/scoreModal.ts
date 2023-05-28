@@ -179,12 +179,14 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 			match.map3 = `${match.map3} Team 2 (${match.team1ReportedT2G3Rounds}-${match.team1ReportedT1G3Rounds})`;
 			match.map3Winner = "Team 2";
 		}
-		team1Players.forEach(async p => {
-            await p.save().catch(console.error);
-        });
-        team2Players.forEach(async p => {
-            await p.save().catch(console.error);
-        });
+		await Promise.all([
+			Promise.all(team1Players.map(async (p) => {
+			  await p.save().catch(console.error);
+			})),
+			Promise.all(team2Players.map(async (p) => {
+			  await p.save().catch(console.error);
+			}))
+		  ]);
 		if(match.map1Winner == "Team 1" && match.map2Winner == "Team 1" || 
 		   match.map2Winner == "Team 1" && match.map3Winner == "Team 1" ||
 		   match.map1Winner == "Team 1" && match.map3Winner == "Team 1") {

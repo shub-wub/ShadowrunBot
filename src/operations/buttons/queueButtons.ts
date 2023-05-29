@@ -48,13 +48,13 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 return;
             }
             if (!queryResults[4]) return;
-            if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
+            /*if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
                 await interaction.reply({
                     content: `Your rating: ${queryResults[0].rating} must be between ${queryResults[4].rankMin} and ${queryResults[4].rankMax}`,
                     ephemeral: true
                 });
                 return;
-            }
+            }*/
 
             // if the player is ready we want to save to the DB
             if(playerReady) {
@@ -145,7 +145,6 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction): Promi
 }
 
 export const removeUnreadiedUsersFromQueue = async (interaction: ButtonInteraction, deferred: boolean): Promise<void> => {
-    console.log(deferred);
     const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { ready: false}, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const receivedEmbed = interaction.message.embeds[0];
@@ -157,16 +156,13 @@ export const removeUnreadiedUsersFromQueue = async (interaction: ButtonInteracti
     
         try {
             await Promise.all(queryResults[0].map(async (u) => {
-                console.log(`deleting ${u._id}`);
                 await QueuePlayer.deleteOne({ _id: u._id });
             }));
             var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
             await Promise.all(updatedQueue.map(async (u) => {
-                console.log(`updating ${u._id}`);
                 u.ready = false;
                 await u.save();
             }));
-            console.log(updatedQueue);
         } catch(error) {
             mongoError(error as MongooseError);
             await interaction.reply({
@@ -349,7 +345,6 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
 
 let countdownInterval: NodeJS.Timeout;
 export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queuePlayers: string, queueCount: number, disableReadyButton: boolean, deferred: boolean): Promise<void> => {
-    console.log(queuePlayers);
     if(!queuePlayers) queuePlayers = "\u200b";
     var currentTime = new Date();
     const minutesToReady = 1;
@@ -405,7 +400,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
                 ]);
     await interaction.message.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1, activeButtonRow2]
+        components: [activeButtonRow1/*, activeButtonRow2*/]
     });
     if(!deferred) {
         deferred = true;
@@ -422,7 +417,6 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
             const remainingTime = Math.max(0, targetTime - currentTime.getTime());
             if (remainingTime === 0) {
                 clearInterval(countdownInterval);
-                console.log("ended");
                 removeUnreadiedUsersFromQueue(interaction, deferred);
                 }
         }, 1000);

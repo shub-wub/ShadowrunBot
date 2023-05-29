@@ -8,7 +8,7 @@ const button: Button = {
     execute: async (interaction, client) => {
         scoreMatch(interaction, client, 1, 3);
     },
-    //cooldown: 10
+    cooldown: 2
 }
 
 export default button;

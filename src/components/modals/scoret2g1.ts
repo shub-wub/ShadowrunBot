@@ -9,7 +9,7 @@ const modal : Modal = {
     execute: (interaction, client: Client) => {
         submitScoreModal(interaction, client, 2, 1);
     },
-    //cooldown: 10
+    cooldown: 2
 }
 
 export default modal;

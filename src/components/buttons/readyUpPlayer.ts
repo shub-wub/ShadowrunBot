@@ -29,7 +29,7 @@ const button: Button = {
 
 	interaction.showModal(modal);
     },
-    //cooldown: 10
+    cooldown: 2
 }
 
 export default button;

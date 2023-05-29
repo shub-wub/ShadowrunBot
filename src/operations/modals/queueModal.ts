@@ -89,7 +89,7 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
         var channel = await client.channels.fetch(guildRecord.queueChannelId);
         var message = await (channel as TextChannel).send({
             embeds: [newEmbed], 
-            components: [activeButtonRow1, activeButtonRow2]
+            components: [activeButtonRow1/*, activeButtonRow2*/]
         });
         try {
             await new Queue({

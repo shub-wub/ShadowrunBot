@@ -8,7 +8,7 @@ const button: Button = {
     execute: async (interaction, client) => {
         pageButton(interaction, "next");
     },
-    //cooldown: 10
+    cooldown: 2
 }
 
 export default button;

@@ -76,6 +76,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team1ReportedT2G1Rounds = team2RoundsWon;
 					match.save();
 					var matchButtonRow1 = createMatchButtonRow1(true, false, true);
+					console.log(`t1 scored g1 ${team1RoundsWon}-${team2RoundsWon}`);
 					await interaction.message?.edit({
 						components: [matchButtonRow1, interaction.message?.components[1]]
 					});
@@ -85,6 +86,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team2ReportedT2G1Rounds = team2RoundsWon;
 					match.save();
 					var matchButtonRow2 = createMatchButtonRow2(true, false, true);
+					console.log(`t2 scored g1 ${team1RoundsWon}-${team2RoundsWon}`);
 					await interaction.message?.edit({
 						components: [interaction.message?.components[0], matchButtonRow2]
 					});
@@ -97,6 +99,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team1ReportedT2G2Rounds = team2RoundsWon;
 					match.save();
 					var matchButtonRow1 = createMatchButtonRow1(true, true, false);
+					console.log(`t1 scored g2 ${team1RoundsWon}-${team2RoundsWon}`);
 					await interaction.message?.edit({
 						components: [matchButtonRow1, interaction.message?.components[1]]
 					});
@@ -105,13 +108,15 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team2ReportedT2G2Rounds = team2RoundsWon;
 					match.save();
 					var matchButtonRow2 = createMatchButtonRow2(true, true, false);
+					console.log(`t2 scored g2 ${team1RoundsWon}-${team2RoundsWon}`);
 					await interaction.message?.edit({
 						components: [interaction.message?.components[0], matchButtonRow2]
 					});
 				}
 				// if both teams have reported, and their reports match, and one team won 2-0, then finalize
-				if ((match.team1ReportedT1G2Rounds > 0 || match.team1ReportedT2G3Rounds > 0) &&
-					(match.team2ReportedT1G2Rounds > 0 || match.team2ReportedT2G3Rounds > 0) &&
+				console.log("g2 " + match);
+				if ((match.team1ReportedT1G2Rounds > 0 || match.team1ReportedT2G2Rounds > 0) &&
+					(match.team2ReportedT1G2Rounds > 0 || match.team2ReportedT2G2Rounds > 0) &&
 					match.team1ReportedT1G1Rounds == match.team2ReportedT1G1Rounds && 
 					match.team1ReportedT1G2Rounds == match.team2ReportedT1G2Rounds && 
 					(match.team1ReportedT1G1Rounds == 6 && match.team1ReportedT1G2Rounds == 6 ||
@@ -129,6 +134,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team2ReportedT1G3Rounds = team1RoundsWon;
 					match.team2ReportedT2G3Rounds = team2RoundsWon;
 				}
+				console.log("g3 " + match);
 				if((match.team1ReportedT1G3Rounds > 0 || match.team1ReportedT2G3Rounds > 0) &&
 				   (match.team2ReportedT1G3Rounds > 0 || match.team2ReportedT2G3Rounds > 0)) {
 					finalizeMatch(interaction, team1Players, team2Players, guild, match);
@@ -179,12 +185,14 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 			match.map3 = `${match.map3} Team 2 (${match.team1ReportedT2G3Rounds}-${match.team1ReportedT1G3Rounds})`;
 			match.map3Winner = "Team 2";
 		}
-		team1Players.forEach(async p => {
-            await p.save().catch(console.error);
-        });
-        team2Players.forEach(async p => {
-            await p.save().catch(console.error);
-        });
+		await Promise.all([
+			Promise.all(team1Players.map(async (p) => {
+			  await p.save().catch(console.error);
+			})),
+			Promise.all(team2Players.map(async (p) => {
+			  await p.save().catch(console.error);
+			}))
+		  ]);
 		if(match.map1Winner == "Team 1" && match.map2Winner == "Team 1" || 
 		   match.map2Winner == "Team 1" && match.map3Winner == "Team 1" ||
 		   match.map1Winner == "Team 1" && match.map3Winner == "Team 1") {

@@ -40,7 +40,7 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 });
                 return;
             }
-            if (queryResults[1].length > 0) {
+            if (queryResults[1].length > 0 && !playerReady) {
                 await interaction.reply({
                     content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
                     ephemeral: true
@@ -48,13 +48,13 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 return;
             }
             if (!queryResults[4]) return;
-            if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
+            /*if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
                 await interaction.reply({
                     content: `Your rating: ${queryResults[0].rating} must be between ${queryResults[4].rankMin} and ${queryResults[4].rankMax}`,
                     ephemeral: true
                 });
                 return;
-            }
+            }*/
 
             // if the player is ready we want to save to the DB
             if(playerReady) {
@@ -93,7 +93,7 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 updatedQueuePlayers.push(queueRecord);
             }
 
-            rebuildQueue(interaction, queueEmbed, updatedQueuePlayers, queryResults[3]);
+            rebuildQueue(interaction, queueEmbed, updatedQueuePlayers, queryResults[3], false);
         }).catch(async error => {
             mongoError(error);
             await interaction.reply({
@@ -104,7 +104,7 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
         });
 }
 
-export const removeUserFromQueue = async (interaction: ButtonInteraction, client: Client): Promise<void> => {
+export const removeUserFromQueue = async (interaction: ButtonInteraction): Promise<void> => {
     const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: interaction.user.id}, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const receivedEmbed = interaction.message.embeds[0];
@@ -133,7 +133,46 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, client
             return;
         }
     
-        rebuildQueue(interaction, queueEmbed, updatedQueue, queryResults[1]);
+        rebuildQueue(interaction, queueEmbed, updatedQueue, queryResults[1], false);
+    }).catch(async error => {
+        mongoError(error);
+        await interaction.reply({
+            content: `There was an error getting data from the database.`,
+            ephemeral: true
+        });
+        return;
+    });
+}
+
+export const removeUnreadiedUsersFromQueue = async (interaction: ButtonInteraction, deferred: boolean): Promise<void> => {
+    const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { ready: false}, { matchMessageId: { $exists: false } }]);
+    const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
+    const receivedEmbed = interaction.message.embeds[0];
+    const queueEmbed = EmbedBuilder.from(receivedEmbed);
+
+    Promise.all([queueUsersQuery, guildQuery])
+    .then(async (queryResults: [IQueuePlayer[], IGuild | null]) => {
+        if(!queryResults[1]) return;
+    
+        try {
+            await Promise.all(queryResults[0].map(async (u) => {
+                await QueuePlayer.deleteOne({ _id: u._id });
+            }));
+            var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
+            await Promise.all(updatedQueue.map(async (u) => {
+                u.ready = false;
+                await u.save();
+            }));
+        } catch(error) {
+            mongoError(error as MongooseError);
+            await interaction.reply({
+                content: `There was an error deleting the player from the queue in the database.`,
+                ephemeral: true
+            });
+            return;
+        }
+    
+        rebuildQueue(interaction, queueEmbed, updatedQueue, queryResults[1], deferred);
     }).catch(async error => {
         mongoError(error);
         await interaction.reply({
@@ -304,14 +343,32 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
     });
 }
 
-export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queuePlayers: string, queueCount: number, disableReadyButton: boolean): Promise<void> => {
+let countdownInterval: NodeJS.Timeout;
+export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queuePlayers: string, queueCount: number, disableReadyButton: boolean, deferred: boolean): Promise<void> => {
     if(!queuePlayers) queuePlayers = "\u200b";
-    queueEmbed.setFields([{
-            name: `Players in Queue - ${queueCount}`,
-            value: queuePlayers,
-            inline: true
-        }
-    ]);
+    var currentTime = new Date();
+    const minutesToReady = 1;
+    const currentTimePlus3Minutes = new Date(currentTime.getTime() + minutesToReady * 60000);
+    const unixTimestamp = Math.floor(currentTimePlus3Minutes.getTime() / 1000);
+    if(!disableReadyButton) {
+        queueEmbed.setFields([{
+                name: `Ready Up Timer`,
+                value: `Ending <t:${unixTimestamp}:R>`,
+                inline: false
+            }, {
+                name: `Players in Queue - ${queueCount}`,
+                value: queuePlayers,
+                inline: false
+            }
+        ]);
+    } else {
+        queueEmbed.setFields([{
+                name: `Players in Queue - ${queueCount}`,
+                value: queuePlayers,
+                inline: false
+            }
+        ]);
+    }
 
     const activeButtonRow1 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
         .addComponents([
@@ -343,12 +400,31 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
                 ]);
     await interaction.message.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1, activeButtonRow2]
+        components: [activeButtonRow1/*, activeButtonRow2*/]
     });
-    await interaction.deferUpdate();
+    if(!deferred) {
+        deferred = true;
+        await interaction.deferUpdate();
+    }
+    if(!disableReadyButton) {
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+        }
+        const duration = minutesToReady * 60;
+        const targetTime = currentTime.getTime() + duration * 1000;
+        countdownInterval = setInterval(() => {
+            currentTime = new Date();
+            const remainingTime = Math.max(0, targetTime - currentTime.getTime());
+            if (remainingTime === 0) {
+                clearInterval(countdownInterval);
+                removeUnreadiedUsersFromQueue(interaction, deferred);
+                }
+        }, 1000);
+    }
+
 }
 
-export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, updatedQueuePlayers: IQueuePlayer[], guild: IGuild): Promise<void> => {
+export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, updatedQueuePlayers: IQueuePlayer[], guild: IGuild, deferred: boolean): Promise<void> => {
     var queueCount = Number(updatedQueuePlayers.length);
     var addUnreadyEmoji = false;
     if (queueCount >= 8) addUnreadyEmoji = true;
@@ -369,5 +445,5 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
             queuePlayers += `:white_check_mark:<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
         }
     }
-    updateQueueEmbed(interaction, queueEmbed, queuePlayers, queueCount, !addUnreadyEmoji);
+    updateQueueEmbed(interaction, queueEmbed, queuePlayers, queueCount, !addUnreadyEmoji, deferred);
 }

@@ -48,13 +48,13 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 return;
             }
             if (!queryResults[4]) return;
-            /*if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
+            if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
                 await interaction.reply({
                     content: `Your rating: ${queryResults[0].rating} must be between ${queryResults[4].rankMin} and ${queryResults[4].rankMax}`,
                     ephemeral: true
                 });
                 return;
-            }*/
+            }
 
             // if the player is ready we want to save to the DB
             if(playerReady) {
@@ -404,7 +404,11 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
     });
     if(!deferred) {
         deferred = true;
-        await interaction.deferUpdate();
+        try {
+            await interaction.deferUpdate();
+        } catch {
+            // this might stop it from crashing I hope.
+        }
     }
     if(!disableReadyButton) {
         if (countdownInterval) {

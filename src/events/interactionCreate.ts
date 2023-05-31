@@ -44,7 +44,8 @@ const event: BotEvent = {
             const { customId, user } = interaction;
             const button = buttons.get(customId);
             const type = "Button";
-            let cooldown = cooldowns.get(`${customId}-${type}-${user.username}`);
+            //let cooldown = cooldowns.get(`${customId}-${type}-${user.username}`);
+            let cooldown = cooldowns.get(`${customId}-${type}`);
             if (!button) {
                 console.error(`There is no code for this button.`);
                 return;
@@ -58,12 +59,15 @@ const event: BotEvent = {
                     setTimeout(() => interaction.deleteReply(), 5000);
                     return
                 }
-                cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
+                //cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
+                cooldowns.set(`${customId}-${type}`, Date.now() + button.cooldown * 1000);
                 setTimeout(() => {
-                    cooldowns.delete(`${customId}-${type}-${user.username}`)
+                    //cooldowns.delete(`${customId}-${type}-${user.username}`)
+                    cooldowns.delete(`${customId}-${type}`)
                 }, button.cooldown * 1000);
             } else if (button.cooldown && !cooldown) {
-                cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
+                //cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
+                cooldowns.set(`${customId}-${type}`, Date.now() + button.cooldown * 1000);
             }
 
             try {

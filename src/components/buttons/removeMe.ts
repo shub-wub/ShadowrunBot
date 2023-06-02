@@ -8,7 +8,7 @@ const button: Button = {
     execute: async (interaction, client) => {
         removeUserFromQueue(interaction);
     },
-    cooldown: 2
+    //cooldown: 2
 }
 
 export default button;

@@ -1,19 +1,4 @@
-import {
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonInteraction,
-	ButtonStyle,
-	CacheType,
-	Client,
-	CommandInteraction,
-	Embed,
-	EmbedBuilder,
-	MessageActionRowComponentBuilder,
-	ModalBuilder,
-	ModalSubmitInteraction,
-	TextChannel,
-	TextInputBuilder,
-	TextInputStyle,
+import { ActionRowBuilder, ButtonInteraction, CacheType,Client, Embed, EmbedBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle,
 } from "discord.js";
 import { getThemeColor, mongoError } from "#utilities";
 import { Field, IGuild, IMap, IMatch, IPlayer, IQueuePlayer } from "../../types";
@@ -24,7 +9,8 @@ import QueuePlayer from "#schemas/queuePlayer";
 import Match from "#schemas/match";
 import Map from "#schemas/map";
 import { MongooseError } from "mongoose";
-import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji } from "#operations";
+import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji, rebuildQueue, updateQueueEmbed } from "#operations";
+import { truncateSync } from "fs";
 
 export const openScoreModal = (interaction: ButtonInteraction<CacheType>, team: number, game: number): void => {
 	const modal = new ModalBuilder()
@@ -76,7 +62,6 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team1ReportedT2G1Rounds = team2RoundsWon;
 					match.save();
 					var matchButtonRow1 = createMatchButtonRow1(true, false, true);
-					console.log(`t1 scored g1 ${team1RoundsWon}-${team2RoundsWon}`);
 					await interaction.message?.edit({
 						components: [matchButtonRow1, interaction.message?.components[1]]
 					});
@@ -86,7 +71,6 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team2ReportedT2G1Rounds = team2RoundsWon;
 					match.save();
 					var matchButtonRow2 = createMatchButtonRow2(true, false, true);
-					console.log(`t2 scored g1 ${team1RoundsWon}-${team2RoundsWon}`);
 					await interaction.message?.edit({
 						components: [interaction.message?.components[0], matchButtonRow2]
 					});
@@ -99,7 +83,6 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team1ReportedT2G2Rounds = team2RoundsWon;
 					match.save();
 					var matchButtonRow1 = createMatchButtonRow1(true, true, false);
-					console.log(`t1 scored g2 ${team1RoundsWon}-${team2RoundsWon}`);
 					await interaction.message?.edit({
 						components: [matchButtonRow1, interaction.message?.components[1]]
 					});
@@ -108,20 +91,18 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team2ReportedT2G2Rounds = team2RoundsWon;
 					match.save();
 					var matchButtonRow2 = createMatchButtonRow2(true, true, false);
-					console.log(`t2 scored g2 ${team1RoundsWon}-${team2RoundsWon}`);
 					await interaction.message?.edit({
 						components: [interaction.message?.components[0], matchButtonRow2]
 					});
 				}
 				// if both teams have reported, and their reports match, and one team won 2-0, then finalize
-				console.log("g2 " + match);
 				if ((match.team1ReportedT1G2Rounds > 0 || match.team1ReportedT2G2Rounds > 0) &&
 					(match.team2ReportedT1G2Rounds > 0 || match.team2ReportedT2G2Rounds > 0) &&
 					match.team1ReportedT1G1Rounds == match.team2ReportedT1G1Rounds && 
 					match.team1ReportedT1G2Rounds == match.team2ReportedT1G2Rounds && 
 					(match.team1ReportedT1G1Rounds == 6 && match.team1ReportedT1G2Rounds == 6 ||
 					match.team1ReportedT2G1Rounds == 6 && match.team1ReportedT2G2Rounds == 6 )) {
-						finalizeMatch(interaction, team1Players, team2Players, guild, match);
+						finalizeMatch(interaction, client, team1Players, team2Players, guild, match);
 					} else {
 						await interaction.deferUpdate();
 					}
@@ -134,10 +115,9 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team2ReportedT1G3Rounds = team1RoundsWon;
 					match.team2ReportedT2G3Rounds = team2RoundsWon;
 				}
-				console.log("g3 " + match);
 				if((match.team1ReportedT1G3Rounds > 0 || match.team1ReportedT2G3Rounds > 0) &&
 				   (match.team2ReportedT1G3Rounds > 0 || match.team2ReportedT2G3Rounds > 0)) {
-					finalizeMatch(interaction, team1Players, team2Players, guild, match);
+					finalizeMatch(interaction, client, team1Players, team2Players, guild, match);
 				} else {
 					match.save();
 					await interaction.deferUpdate();
@@ -147,7 +127,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
     });
 }
 
-export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheType>, team1Players: IPlayer[], team2Players: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
+export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, team1Players: IPlayer[], team2Players: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
 	// if both teams scores match for all rounds
 	if (match.team1ReportedT1G1Rounds == match.team2ReportedT1G1Rounds && 
 		match.team1ReportedT1G2Rounds == match.team2ReportedT1G2Rounds && 
@@ -201,7 +181,13 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 				match.matchWinner = "Team 2"
 		   }
 		match.save();
-		updateMatchEmbed(interaction, team1Players, team2Players, guild, match)
+		if(match.matchWinner == "Team 1") {
+			addWinnersBackToQueue(interaction, client, team1Players, guild, match);
+		} else {
+			addWinnersBackToQueue(interaction, client, team2Players, guild, match);
+		}
+		updateMatchEmbed(interaction, team1Players, team2Players, guild, match);
+
 	} else {
 		match.team1ReportedT1G1Rounds = 0;
 		match.team1ReportedT1G2Rounds = 0;
@@ -224,6 +210,72 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 		await interaction.deferUpdate();
 	}
 };
+
+export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, winningPlayers: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
+	// get the users waiting in the queue when the match ended
+	const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: match.queueId}, { matchMessageId: { $exists: false } }]);
+	const winnersQueueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([
+		{ messageId: match.queueId },
+		{ matchMessageId: match.messageId },
+		{
+		  $or: [
+			{ discordId: winningPlayers[0].discordId },
+			{ discordId: winningPlayers[1].discordId },
+			{ discordId: winningPlayers[2].discordId },
+			{ discordId: winningPlayers[3].discordId },
+		  ],
+		},
+	  ]);
+
+	var queueEmbedMessage = await (client?.channels?.cache.get(guild.queueChannelId) as TextChannel).messages.fetch(match.queueId);
+	const receivedEmbed = queueEmbedMessage.embeds[0];
+    const queueEmbed = EmbedBuilder.from(receivedEmbed);
+
+    Promise.all([queueUsersQuery, winnersQueueUsersQuery]).then(async (queryResults: [IQueuePlayer[], IQueuePlayer[]]) => {
+		var queuePlayers = queryResults[0];
+		var winningPlayers = queryResults[1];
+		var updatedWinningPlayers: IQueuePlayer[] = [];
+		var updatedQueuePlayers: IQueuePlayer[] = [];
+		var isInReadyUpState = false;
+		if (queuePlayers[0] && queuePlayers.length > 0) {
+			for (const qp of queuePlayers) {
+				// Check if the queue is already in a ready up state.
+				if (qp.ready === true) {
+					isInReadyUpState = true;
+					break;
+				}
+			}
+		}
+
+		for (const wp of winningPlayers) {
+			var queueRecord = null;
+			try {
+				queueRecord = await new QueuePlayer({
+					discordId: wp.discordId,
+					messageId: wp.messageId,
+					ready: false,
+				}).save();
+			} catch (error) {
+				mongoError(error as MongooseError);
+				await interaction.reply({
+					content: `There was an error adding the player to the queue in the database.`,
+					ephemeral: true,
+				});
+				return;
+			}
+			updatedWinningPlayers.push(queueRecord);
+		}
+
+		if(isInReadyUpState) {
+			// add winners to end of queue
+			updatedQueuePlayers = queuePlayers.concat(updatedWinningPlayers);
+		} else {
+			// add players to front of queue
+			updatedQueuePlayers = updatedWinningPlayers.concat(queuePlayers);
+		}
+		rebuildQueue(interaction as unknown as ButtonInteraction<CacheType>, queueEmbed, queueEmbedMessage, updatedQueuePlayers, guild, true)
+    });
+}
 
 export const updateMatchEmbed = async (interaction: ModalSubmitInteraction<CacheType>, team1Players: IPlayer[], team2Players: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
 	const receivedEmbed = interaction.message?.embeds[0];

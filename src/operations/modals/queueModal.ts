@@ -1,18 +1,4 @@
-import {
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle,
-	CacheType,
-	Client,
-	CommandInteraction,
-	EmbedBuilder,
-	MessageActionRowComponentBuilder,
-	ModalBuilder,
-	ModalSubmitInteraction,
-	TextChannel,
-	TextInputBuilder,
-	TextInputStyle,
-} from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CacheType, Client, CommandInteraction, EmbedBuilder, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { getThemeColor, mongoError } from "#utilities";
 import { IGuild } from "../../types";
 import Guild from "#schemas/guild";
@@ -89,7 +75,7 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
         var channel = await client.channels.fetch(guildRecord.queueChannelId);
         var message = await (channel as TextChannel).send({
             embeds: [newEmbed], 
-            components: [activeButtonRow1/*, activeButtonRow2*/]
+            components: [activeButtonRow1, activeButtonRow2]
         });
         try {
             await new Queue({

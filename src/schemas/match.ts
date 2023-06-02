@@ -3,6 +3,7 @@ import { IMatch } from "../types";
 
 const matchSchema = new Schema<IMatch>({
     messageId: String,
+    queueId: String,
     map1Winner: String,
     map2Winner: String,
     map3Winner: String,

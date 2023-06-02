@@ -9,7 +9,7 @@ const modal : Modal = {
     execute: (interaction, client: Client) => {
         submitQueueModal(interaction, client);
     },
-    cooldown: 10
+    //cooldown: 10
 }
 
 export default modal;

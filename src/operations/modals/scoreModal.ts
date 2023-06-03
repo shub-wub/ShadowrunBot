@@ -1,9 +1,8 @@
-import { ActionRowBuilder, ButtonInteraction, CacheType,Client, Embed, EmbedBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle,
-} from "discord.js";
+import { ActionRowBuilder, ButtonInteraction, CacheType, Client, Embed, EmbedBuilder, Guild, GuildMember, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle, Permissions, PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import { getThemeColor, mongoError } from "#utilities";
 import { Field, IGuild, IMap, IMatch, IPlayer, IQueuePlayer } from "../../types";
 import Player from "#schemas/player";
-import Guild from "#schemas/guild";
+import GuildRecord from "#schemas/guild";
 import Queue from "#schemas/queue";
 import QueuePlayer from "#schemas/queuePlayer";
 import Match from "#schemas/match";
@@ -43,7 +42,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
     var team2RoundsWon = Number(interaction.fields.getTextInputValue("team2RoundsWon"));
     const matchQuery = Match.findOne<IMatch>({ messageId: interaction.message?.id });
     const matchPlayersQuery = QueuePlayer.find<IQueuePlayer>({ matchMessageId: interaction.message?.id });
-	const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
+	const guildQuery = GuildRecord.findOne<IGuild>({ guildId: interaction.guildId });
     Promise.all([matchQuery, matchPlayersQuery, guildQuery]).then(async (queryResults: [IMatch | null, IQueuePlayer[], IGuild | null]) => {
 		var match = queryResults[0] as IMatch;
 		var guild = queryResults[2] as IGuild;
@@ -135,6 +134,10 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 		match.team1ReportedT2G1Rounds == match.team2ReportedT2G1Rounds && 
 		match.team1ReportedT2G2Rounds == match.team2ReportedT2G2Rounds && 
 		match.team1ReportedT2G3Rounds == match.team2ReportedT2G3Rounds) {
+
+		// we have to serialize and deserialize the object to create a snapshot.
+		const playersWithPreviousRating = JSON.parse(JSON.stringify(team1Players.concat(team2Players)));
+
 		// score game 1
 		if(match.team1ReportedT1G1Rounds == 6) {
 			calculateTeamElo(team1Players, team2Players, match.team1ReportedT1G1Rounds, match.team1ReportedT2G1Rounds);
@@ -186,8 +189,8 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 		} else {
 			addWinnersBackToQueue(interaction, client, team2Players, guild, match);
 		}
-		updateMatchEmbed(interaction, team1Players, team2Players, guild, match);
-
+		updateNames(interaction, client, team1Players.concat(team2Players), guild);
+		updateMatchEmbed(interaction, team1Players, team2Players, guild, match, playersWithPreviousRating);
 	} else {
 		match.team1ReportedT1G1Rounds = 0;
 		match.team1ReportedT1G2Rounds = 0;
@@ -210,6 +213,45 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 		await interaction.deferUpdate();
 	}
 };
+
+export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, winningPlayers: IPlayer[], guild: IGuild) => {
+	var guildMemberQueries: Promise<GuildMember>[] = [];
+	for (const wp of winningPlayers) {
+		if(!interaction.guild) return;
+		guildMemberQueries.push(interaction.guild?.members.fetch(wp.discordId));
+	}
+
+	await Promise.all(guildMemberQueries).then(async (queryResults) => {
+		for (const qr of queryResults) {
+			var player = winningPlayers.find(p => p.discordId == qr.user.id);
+			const isAdmin = qr.permissions.has(PermissionsBitField.Flags.Administrator);
+			if (!player) continue;
+			if (player.discordId != interaction.guild?.ownerId && !isAdmin) {
+				var nickname = '';
+				// they don't have a nickname yet
+				if(!qr.nickname) {
+					nickname = `${qr.displayName}{${player.rating}}`;
+				}
+				// they have a nickname and its been updated before 
+				else if(qr.nickname?.includes('{')) {
+					var oldNickname = qr.nickname;
+					var updatedNickname = oldNickname.split('{')[0];
+					nickname = `${updatedNickname}{${player.rating}}`;
+				}
+				// they have a nickname and it hasn't been updated before 
+				else {
+					nickname = `${qr.nickname}{${player.rating}}`;
+				}
+				try {
+					console.log(nickname);
+					qr.setNickname(nickname);
+				} catch(error) {
+					console.log("Could not set nickname to " + nickname);
+				}
+			}
+		}
+	});
+}
 
 export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, winningPlayers: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
 	// get the users waiting in the queue when the match ended
@@ -277,28 +319,38 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
     });
 }
 
-export const updateMatchEmbed = async (interaction: ModalSubmitInteraction<CacheType>, team1Players: IPlayer[], team2Players: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
+export const updateMatchEmbed = async (interaction: ModalSubmitInteraction<CacheType>, team1Players: IPlayer[], team2Players: IPlayer[], guild: IGuild, match: IMatch, playersWithPreviousRating: IPlayer[]): Promise<void> => {
 	const receivedEmbed = interaction.message?.embeds[0];
 	const matchEmbed = EmbedBuilder.from(receivedEmbed as Embed);
 	var team1 = "";
     var team2 = "";
     var team1Total = 0;
     var team2Total = 0;
+	var team1TotalDifference = 0;
+	var team2TotalDifference = 0;
     var fields: Field[] = [];
     for (let i = 0; i < team1Players.length; i++) {
         var emoji = getRankEmoji(team1Players[i], guild);
-        team1Total += team1Players[i].rating;
-        team1 += `<@${team1Players[i].discordId}> ${emoji}${team1Players[i].rating}\n`;
+		var playerPrevious = playersWithPreviousRating.find(p => p.discordId == team1Players[i].discordId);
+		if(!playerPrevious) return;
+		var ratingDifference = team1Players[i].rating - playerPrevious?.rating;
+		team1TotalDifference += ratingDifference;
+        team1Total += playerPrevious?.rating;
+        team1 += `<@${team1Players[i].discordId}> ${emoji}${playerPrevious?.rating} (${ratingDifference})\n`;
     }
     for (let i = 0; i < team2Players.length; i++) {
         var emoji = getRankEmoji(team2Players[i], guild);
-        team2Total += team2Players[i].rating;
-        team2 += `<@${team2Players[i].discordId}> ${emoji}${team2Players[i].rating}\n`;
+		var playerPrevious = playersWithPreviousRating.find(p => p.discordId == team2Players[i].discordId);
+		if(!playerPrevious) return;
+		var ratingDifference = team2Players[i].rating - playerPrevious?.rating;
+		team2TotalDifference += ratingDifference;
+        team2Total += playerPrevious?.rating;
+        team2 += `<@${team2Players[i].discordId}> ${emoji}${playerPrevious?.rating} (${ratingDifference})\n`;
     }
     fields.push({name: `Maps`, value: `${match.map1}\n${match.map2}\n${match.map3}`, inline: false});
 	fields.push({name: `Winner`, value: match.matchWinner, inline: false});
-    fields.push({name: `Team 1(${team1Total})`, value: team1, inline: true});
-    fields.push({name: `Team 2(${team2Total})`, value: team2, inline: true});
+    fields.push({name: `Team 1(${team1Total}) (${team1TotalDifference})`, value: team1, inline: true});
+    fields.push({name: `Team 2(${team2Total}) (${team2TotalDifference})`, value: team2, inline: true});
 	matchEmbed.setFields(fields);
 	await interaction.message?.edit({
         embeds: [matchEmbed],

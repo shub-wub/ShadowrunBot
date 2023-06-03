@@ -1,5 +1,5 @@
 import { getThemeColor, mongoError } from "#utilities";
-import {CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, } from "discord.js";
+import {CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, } from "discord.js";
 import QueuePlayer from "#schemas/queuePlayer";
 import Player from "#schemas/player";
 import Guild from "#schemas/guild";
@@ -16,7 +16,9 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
 	const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
     const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
-    const inAMatchQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
+    // TODO check if they are already in a match for this queue. 
+    // I think we will have to set a bool on the Iqueueplayer record for if the match is finished to check here
+    //const inAMatchQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
     const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
@@ -91,6 +93,13 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 updatedQueuePlayers.push(queueRecord);
             }
 
+            if(updatedQueuePlayers.length >= 8 && !playerReady) {
+                for (const uqp of updatedQueuePlayers) {
+                    var user = client.users.cache.get(uqp.discordId);
+                    if(!user) continue;
+                    user.send(`Hello! You're match is ready please ready up here ${interaction.channel}`)
+                }
+            }
             rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, queryResults[3], false);
         }).catch(async error => {
             mongoError(error);
@@ -143,7 +152,6 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction): Promi
 }
 
 export const removeUnreadiedUsersFromQueue = async (interaction: ButtonInteraction, queueEmbedMessage: Message<boolean>, deferred: boolean): Promise<void> => {
-    console.log("removing unreadied users.")
     const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { ready: false}, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const receivedEmbed = interaction.message.embeds[0];
@@ -399,7 +407,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
                 ]);
     await queueEmbedMessage.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1, activeButtonRow2]
+        components: [activeButtonRow1/*, activeButtonRow2*/]
     });
     if(!deferred) {
         deferred = true;
@@ -456,16 +464,16 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
         // player joined the queue and there are 8 players and they are one of the first 8
         if(addUnreadyEmoji && !updatedQueuePlayers[i].ready && i < 8) {
             queuePlayers += `:x:<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
-        } 
+        }
         // player joined the queue and there are 8 players and they are NOT one of the first 8
         else if(addUnreadyEmoji && !updatedQueuePlayers[i].ready && i >= 8) {
             queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
-        } 
+        }
         // player joined the queue and there are NOT 8 players
         else if (!addUnreadyEmoji && !updatedQueuePlayers[i].ready) {
             queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
 
-        } 
+        }
         // player readied up
         else if (addUnreadyEmoji && updatedQueuePlayers[i].ready && i < 8) {
             queuePlayers += `:white_check_mark:<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;

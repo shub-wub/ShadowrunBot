@@ -15,7 +15,7 @@ export const pageButton = async (
 ): Promise<void> => {
 	// Retrieve the players from the database and sort by rating
 	const players = await Player.find().sort("-rating");
-	const playersPerPage = 10;
+	const playersPerPage = 25;
 	var leaderboardRecord = await Leaderboard.findOne<ILeaderboard>({
 		messageId: interaction.message.id,
 	});

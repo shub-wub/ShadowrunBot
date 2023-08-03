@@ -97,10 +97,10 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 for (const uqp of updatedQueuePlayers) {
                     var user = client.users.cache.get(uqp.discordId);
                     if(!user) continue;
-                    user.send(`Hello! You're match is ready please ready up here ${interaction.channel}`)
+                    await user.send(`Hello! You're match is ready please ready up here ${interaction.channel}`).catch((e:any)=>{});
                 }
             }
-            rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, queryResults[3], false);
+            rebuildQueue(interaction, queueEmbed, updatedQueuePlayers, queryResults[3], false);
         }).catch(async error => {
             mongoError(error);
             await interaction.reply({

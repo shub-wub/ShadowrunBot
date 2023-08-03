@@ -12,7 +12,7 @@ const modal : Modal = {
         var playerByUsername = interaction.guild?.members.cache.find(gm => gm.user.username == player);
         processQueue(interaction as unknown as ButtonInteraction, client, ready, playerByUsername?.user.id as string);
     },
-    cooldown: 10
+    //cooldown: 10
 }
 
 export default modal;

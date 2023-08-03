@@ -51,7 +51,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 return;
             }
             if (!queryResults[4]) return;
-            if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
+            if (!(queryResults[0].rating >= queryResults[4].rankMin && queryResults[0].rating <= queryResults[4].rankMax)) {
                 await interaction.reply({
                     content: `Your rating: ${queryResults[0].rating} must be between ${queryResults[4].rankMin} and ${queryResults[4].rankMax}`,
                     ephemeral: true
@@ -104,7 +104,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 for (const uqp of updatedQueuePlayers) {
                     var user = client.users.cache.get(uqp.discordId);
                     if(!user) continue;
-                    user.send(`Hello! You're match is ready please ready up here ${interaction.channel}`)
+                    await user.send(`Hello! You're match is ready please ready up here ${interaction.channel}`).catch((e:any)=>{});
                 }
             }*/
             rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, queryResults[3], false);

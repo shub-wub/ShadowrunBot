@@ -8,7 +8,7 @@ const button: Button = {
     execute: async (interaction, client) => {
         processQueue(interaction, client, false);
     },
-    cooldown: 2
+    //cooldown: 2
 }
 
 export default button;

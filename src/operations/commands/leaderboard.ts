@@ -40,6 +40,7 @@ export const createLeaderboardEmbed = async (
 
             var emoji = getRankEmoji(pagePlayers[i], guildRecord);
 
+			wlr = Math.round(wlr * 100) / 100;
             fields.push({name: " ", value: `**${playerPlace}.** <@${pagePlayers[i].discordId}> - ${emoji}${pagePlayers[i].rating} - ${wlr}`, inline: false});
         }
     } else if (device == "pc") {

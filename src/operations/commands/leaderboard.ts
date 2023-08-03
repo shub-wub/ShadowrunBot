@@ -34,7 +34,7 @@ export const createLeaderboardEmbed = async (
 
     if (device == "mobile") {
         for (let i = 0; i < pagePlayers.length; i++) {
-            const playerPlace = i + 1 + (25 * (pageNumber - 1));
+            const playerPlace = i + 1 + (playersPerPage * (pageNumber - 1));
 
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
 
@@ -48,7 +48,7 @@ export const createLeaderboardEmbed = async (
         var ratings = "";
         var winlossratio = "";
         for (let i = 0; i < pagePlayers.length; i++) {
-            const playerPlace = i + 1 + 25 * (pageNumber - 10);
+            const playerPlace = i + 1 + (playersPerPage * (pageNumber - 1));
 
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
 

@@ -41,7 +41,7 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                 return;
             }
             if (!queryResults[4]) return;
-            if (!(queryResults[0].rating > queryResults[4].rankMin && queryResults[0].rating < queryResults[4].rankMax)) {
+            if (!(queryResults[0].rating >= queryResults[4].rankMin && queryResults[0].rating <= queryResults[4].rankMax)) {
                 await interaction.reply({
                     content: `Your rating: ${queryResults[0].rating} must be between ${queryResults[4].rankMin} and ${queryResults[4].rankMax}`,
                     ephemeral: true

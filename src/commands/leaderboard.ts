@@ -16,7 +16,7 @@ const command: SlashCommand = {
 	execute: async (interaction: CommandInteraction, client: Client) => {
 		// Retrieve the players from the database and sort by rating
 		const players = await Player.find().sort("-rating");
-		const playersPerPage = 10;
+		const playersPerPage = 25;
 		var device: string = (interaction.options as any).getString("device");
 		await leaderboard(
 			interaction,

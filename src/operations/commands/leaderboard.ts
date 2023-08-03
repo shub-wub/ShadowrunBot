@@ -34,7 +34,7 @@ export const createLeaderboardEmbed = async (
 
     if (device == "mobile") {
         for (let i = 0; i < pagePlayers.length; i++) {
-            const playerPlace = i + 1 + (25 * (pageNumber - 1));
+            const playerPlace = i + 1 + (10 * (pageNumber - 1));
 
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
 
@@ -48,7 +48,7 @@ export const createLeaderboardEmbed = async (
         var ratings = "";
         var winlossratio = "";
         for (let i = 0; i < pagePlayers.length; i++) {
-            const playerPlace = i + 1 + 25 * (pageNumber - 10);
+            const playerPlace = i + 1 + (10 * (pageNumber - 1));
 
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
 
@@ -130,10 +130,7 @@ export const leaderboard = async (
 			}).save();
 		} catch (error) {
 			mongoError(error as MongooseError);
-			await interaction.reply({
-				content: `There was an error adding the leaderboard to the database.`,
-				ephemeral: true,
-			});
+			console.log(`There was an error adding the leaderboard to the database.`);
 			return;
 		}
 		await interaction.reply({

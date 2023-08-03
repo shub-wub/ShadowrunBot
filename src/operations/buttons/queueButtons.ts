@@ -10,8 +10,9 @@ import { Field, IGuild, IPlayer, IQueue, IQueuePlayer, IMap } from "../../types"
 import { MongooseError } from "mongoose";
 import { generateTeams, getRankEmoji } from "#operations";
 
-export const processQueue = (interaction: ButtonInteraction, client: Client, playerReady = false, overridePlayer?: string): void => {
+export const processQueue = async (interaction: ButtonInteraction, client: Client, playerReady = false, overridePlayer?: string): Promise<void> => {
     var userId = overridePlayer ? overridePlayer : interaction.user.id;
+
 	const receivedEmbed = interaction.message.embeds[0];
 	const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
@@ -25,6 +26,15 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
 
     Promise.all([playerQuery, queueUserQuery, queueAllPlayers, guildQuery, queueQuery])
         .then(async (queryResults: [IPlayer | null, IQueuePlayer[], IQueuePlayer[], IGuild | null, IQueue | null]) => {
+
+            if (queryResults[0]?.isBanned) {
+                await interaction.reply({
+                    content: `You have been banned from ranked until you appeal or the ban time is up.`,
+                    ephemeral: true
+                });
+                return;
+            }
+
             if(!queryResults[3]) return;
             if (!queryResults[0]) {
                 await interaction.reply({
@@ -84,29 +94,23 @@ export const processQueue = (interaction: ButtonInteraction, client: Client, pla
                     }).save();
                 } catch (error) {
                     mongoError(error as MongooseError);
-                    await interaction.reply({
-                        content: `There was an error adding the player to the queue in the database.`,
-                        ephemeral: true,
-                    });
+                    console.log(`There was an error adding the player to the queue in the database.`)
                     return;
                 }
                 updatedQueuePlayers.push(queueRecord);
             }
 
-            if(updatedQueuePlayers.length >= 8 && !playerReady) {
+            /*if(updatedQueuePlayers.length >= 8 && !playerReady) {
                 for (const uqp of updatedQueuePlayers) {
                     var user = client.users.cache.get(uqp.discordId);
                     if(!user) continue;
                     user.send(`Hello! You're match is ready please ready up here ${interaction.channel}`)
                 }
-            }
+            }*/
             rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, queryResults[3], false);
         }).catch(async error => {
             mongoError(error);
-            await interaction.reply({
-                content: `There was an error getting data from the database for user: ${userId}`,
-                ephemeral: true
-            });
+            console.log(`There was an error getting data from the database for user: ${userId}`)
             return;
         });
 }
@@ -133,20 +137,14 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction): Promi
             var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
         } catch(error) {
             mongoError(error as MongooseError);
-            await interaction.reply({
-                content: `There was an error deleting the player from the queue in the database.`,
-                ephemeral: true
-            });
+            console.log(`There was an error deleting the player from the queue in the database.`)
             return;
         }
     
         rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueue, queryResults[1], false);
     }).catch(async error => {
         mongoError(error);
-        await interaction.reply({
-            content: `There was an error getting data from the database.`,
-            ephemeral: true
-        });
+        console.log(`There was an error getting data from the database.`)
         return;
     });
 }
@@ -172,20 +170,14 @@ export const removeUnreadiedUsersFromQueue = async (interaction: ButtonInteracti
             }));
         } catch(error) {
             mongoError(error as MongooseError);
-            await interaction.reply({
-                content: `There was an error deleting the player from the queue in the database.`,
-                ephemeral: true
-            });
+            console.log(`There was an error deleting the player from the queue in the database.`)
             return;
         }
     
         rebuildQueue(interaction, queueEmbed, queueEmbedMessage, updatedQueue, queryResults[1], deferred);
     }).catch(async error => {
         mongoError(error);
-        await interaction.reply({
-            content: `There was an error getting data from the database.`,
-            ephemeral: true
-        });
+        console.log(`There was an error getting data from the database.`)
         return;
     });
 }
@@ -334,18 +326,12 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
               }));
         } catch (error) {
             mongoError(error as MongooseError);
-            await interaction.reply({
-                content: `There was an error adding the match to the database.`,
-                ephemeral: true,
-            });
+            console.log(`There was an error adding the match to the database.`)
             return;
         }
     }).catch(async error => {
         mongoError(error);
-        await interaction.reply({
-            content: `There was an error getting data from the database for the match.`,
-            ephemeral: true
-        });
+        console.log(`There was an error getting data from the database for the match.`)
         return;
     });
 }
@@ -407,16 +393,13 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
                 ]);
     await queueEmbedMessage.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1/*, activeButtonRow2*/]
+        components: [activeButtonRow1, activeButtonRow2]
     });
     if(!deferred) {
         deferred = true;
-        try {
-            await interaction.deferUpdate();
-        } catch(error) {
+        await interaction.deferUpdate().catch(error => {
             console.log(error);
-            // this might stop it from crashing I hope.
-        }
+        });
     }
     if(isInReadyUpState) {
         if (countdownInterval) {

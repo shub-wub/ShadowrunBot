@@ -6,9 +6,11 @@ const button: Button = {
         name: 'readyup'
     },
     execute: async (interaction, client) => {
+        const currentTime = new Date(Date.now()).toLocaleString();
+        console.log(currentTime + " " + interaction.user.username + " pushed readyup");
         processQueue(interaction, client, true);
     },
-    //cooldown: 3
+    cooldown: 1
 }
 
 export default button;

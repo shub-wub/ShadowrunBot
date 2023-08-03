@@ -6,6 +6,8 @@ const button: Button = {
         name: 'readyUpPlayer'
     },
     execute: async (interaction, client) => {
+		const currentTime = new Date(Date.now()).toLocaleString();
+        console.log(currentTime + " " + interaction.user.username + " pushed readyUpPlayer");
         const modal = new ModalBuilder()
 		.setCustomId("player")
 		.setTitle("Player")

@@ -64,7 +64,9 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					await interaction.message?.edit({
 						components: [matchButtonRow1, interaction.message?.components[1]]
 					});
-					await interaction.deferUpdate();
+					await interaction.deferUpdate().catch(error => {
+						console.log(error);
+					});
 				} else {
 					match.team2ReportedT1G1Rounds = team1RoundsWon;
 					match.team2ReportedT2G1Rounds = team2RoundsWon;
@@ -73,7 +75,9 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					await interaction.message?.edit({
 						components: [interaction.message?.components[0], matchButtonRow2]
 					});
-					await interaction.deferUpdate();
+					await interaction.deferUpdate().catch(error => {
+						console.log(error);
+					});
 				}
 				break;
 			case 2:
@@ -103,7 +107,9 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team1ReportedT2G1Rounds == 6 && match.team1ReportedT2G2Rounds == 6 )) {
 						finalizeMatch(interaction, client, team1Players, team2Players, guild, match);
 					} else {
-						await interaction.deferUpdate();
+						await interaction.deferUpdate().catch(error => {
+							console.log(error);
+						});
 					}
 				break;				
 			case 3:
@@ -119,7 +125,9 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					finalizeMatch(interaction, client, team1Players, team2Players, guild, match);
 				} else {
 					match.save();
-					await interaction.deferUpdate();
+					await interaction.deferUpdate().catch(error => {
+						console.log(error);
+					});
 				}
 				break;
 		}
@@ -210,7 +218,9 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 		await interaction.message?.edit({
 			components: [matchButtonRow1, matchButtonRow2]
 		});
-		await interaction.deferUpdate();
+		await interaction.deferUpdate().catch(error => {
+            console.log(error);
+        });
 	}
 };
 
@@ -243,7 +253,6 @@ export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>
 					nickname = `${qr.nickname}{${player.rating}}`;
 				}
 				try {
-					console.log(nickname);
 					qr.setNickname(nickname);
 				} catch(error) {
 					console.log("Could not set nickname to " + nickname);
@@ -284,6 +293,7 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 				// Check if the queue is already in a ready up state.
 				if (qp.ready === true) {
 					isInReadyUpState = true;
+					console.log("1isInReadyUpState " + isInReadyUpState)
 					break;
 				}
 			}
@@ -299,15 +309,13 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 				}).save();
 			} catch (error) {
 				mongoError(error as MongooseError);
-				await interaction.reply({
-					content: `There was an error adding the player to the queue in the database.`,
-					ephemeral: true,
-				});
+				console.log(`There was an error adding the player to the queue in the database.`)
 				return;
 			}
 			updatedWinningPlayers.push(queueRecord);
 		}
 
+		console.log("2isInReadyUpState " + isInReadyUpState)
 		if(isInReadyUpState) {
 			// add winners to end of queue
 			updatedQueuePlayers = queuePlayers.concat(updatedWinningPlayers);
@@ -356,5 +364,7 @@ export const updateMatchEmbed = async (interaction: ModalSubmitInteraction<Cache
         embeds: [matchEmbed],
         components: []
     });
-    await interaction.deferUpdate();
+	await interaction.deferUpdate().catch(error => {
+		console.log(error);
+	});
 };

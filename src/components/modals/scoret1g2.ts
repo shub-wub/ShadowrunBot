@@ -7,6 +7,8 @@ const modal : Modal = {
         name: 'scoret1g2'
     },
     execute: (interaction, client: Client) => {
+        const currentTime = new Date(Date.now()).toLocaleString();
+        console.log(currentTime + " " + interaction.user.username + " submitted scoret1g2");
         submitScoreModal(interaction, client, 1, 2);
     },
     cooldown: 2

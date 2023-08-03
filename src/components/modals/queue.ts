@@ -7,6 +7,8 @@ const modal : Modal = {
         name: 'queue'
     },
     execute: (interaction, client: Client) => {
+        const currentTime = new Date(Date.now()).toLocaleString();
+        console.log(currentTime + " " + interaction.user.username + " submitted queue");
         submitQueueModal(interaction, client);
     },
     //cooldown: 10

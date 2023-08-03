@@ -6,6 +6,8 @@ const button: Button = {
         name: 'next'
     },
     execute: async (interaction, client) => {
+        const currentTime = new Date(Date.now()).toLocaleString();
+        console.log(currentTime + " " + interaction.user.username + " pushed next");
         pageButton(interaction, "next");
     },
     cooldown: 2

@@ -36,10 +36,7 @@ export const statRegister = async (
 		}).save();
 	} catch (error) {
 		mongoError(error as MongooseError);
-		await interaction.reply({
-			content: `There was an error saving the record to the database.`,
-			ephemeral: true,
-		});
+		console.log(`There was an error saving the record to the database.`);
 		return;
 	}
 	await interaction.reply({

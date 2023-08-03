@@ -160,10 +160,7 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 			});
 		} catch (error) {
 			mongoError(error as MongooseError);
-			await interaction.reply({
-				content: `There was an error creating the guild record in the database.`,
-				ephemeral: true,
-			});
+			console.log(`There was an error creating the guild record in the database.`);
 		}
 	});
 };

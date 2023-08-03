@@ -26,10 +26,7 @@ export const pageButton = async (
 		leaderboardRecord.save();
 	} catch (error) {
 		mongoError(error as MongooseError);
-		await interaction.reply({
-			content: `There was an issue updating the page number in the database.`,
-			ephemeral: true,
-		});
+		console.log(`There was an issue updating the page number in the database.`)
 	}
 	const newEmbed = await createLeaderboardEmbed(
 		leaderboardRecord.page,

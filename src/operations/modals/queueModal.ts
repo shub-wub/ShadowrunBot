@@ -75,7 +75,7 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
         var channel = await client.channels.fetch(guildRecord.queueChannelId);
         var message = await (channel as TextChannel).send({
             embeds: [newEmbed], 
-            components: [activeButtonRow1/*, activeButtonRow2*/]
+            components: [activeButtonRow1, activeButtonRow2]
         });
         try {
             await new Queue({
@@ -85,10 +85,7 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
             }).save();
         } catch (error) {
             mongoError(error as MongooseError);
-            await interaction.reply({
-                content: `There was an error saving the Queue record to the database.`,
-                ephemeral: true,
-            });
+            console.log(`There was an error saving the record to the database.`);
             return;
         }
         await interaction.reply({

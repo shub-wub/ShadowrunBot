@@ -6,6 +6,8 @@ const button: Button = {
         name: 'queuePlayer'
     },
     execute: async (interaction, client) => {
+		const currentTime = new Date(Date.now()).toLocaleString();
+        console.log(currentTime + " " + interaction.user.username + " pushed queuePlayer");
         const modal = new ModalBuilder()
 		.setCustomId("player")
 		.setTitle("Player")

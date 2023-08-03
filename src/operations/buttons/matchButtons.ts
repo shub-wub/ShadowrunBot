@@ -1,24 +1,8 @@
-import { getThemeColor, mongoError } from "#utilities";
-import {
-	CacheType,
-	ButtonInteraction,
-	EmbedBuilder,
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle,
-	MessageActionRowComponentBuilder,
-    Client,
-    TextChannel,
-} from "discord.js";
+import { ButtonInteraction, Client } from "discord.js";
 import QueuePlayer from "#schemas/queuePlayer";
-import Player from "#schemas/player";
-import Guild from "#schemas/guild";
-import Queue from "#schemas/queue";
 import Match from "#schemas/match";
-import Map from "#schemas/map";
-import { Field, IGuild, IPlayer, IQueue, IQueuePlayer, IMap, IMatch } from "../../types";
-import { MongooseError } from "mongoose";
-import { generateTeams, getRankEmoji, openScoreModal } from "#operations";
+import { IQueuePlayer, IMatch } from "../../types";
+import { openScoreModal } from "#operations";
 
 export const scoreMatch = (interaction: ButtonInteraction, client: Client, team: number, game: number): void => {
     const matchQuery = Match.findOne<IMatch>({ messageId: interaction.message.id });
@@ -41,6 +25,5 @@ export const scoreMatch = (interaction: ButtonInteraction, client: Client, team:
                 return;
             }
             openScoreModal(interaction, team, game);
-            
     });
 };

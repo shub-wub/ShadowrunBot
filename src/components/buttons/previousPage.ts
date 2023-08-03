@@ -6,6 +6,8 @@ const button: Button = {
         name: 'previous'
     },
     execute: async (interaction, client) => {
+        const currentTime = new Date(Date.now()).toLocaleString();
+        console.log(currentTime + " " + interaction.user.username + " pushed previous");
         pageButton(interaction, "previous");
     },
     cooldown: 2

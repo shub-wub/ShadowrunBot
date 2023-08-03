@@ -130,10 +130,7 @@ export const leaderboard = async (
 			}).save();
 		} catch (error) {
 			mongoError(error as MongooseError);
-			await interaction.reply({
-				content: `There was an error adding the leaderboard to the database.`,
-				ephemeral: true,
-			});
+			console.log(`There was an error adding the leaderboard to the database.`);
 			return;
 		}
 		await interaction.reply({

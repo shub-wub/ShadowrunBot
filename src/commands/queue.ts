@@ -9,7 +9,7 @@ const command: SlashCommand = {
     execute: (interaction, client) => {
         openQueueModal(interaction);
     },
-    cooldown: 10
+    //cooldown: 10
 }
 
 export default command;

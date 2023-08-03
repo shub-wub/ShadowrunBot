@@ -34,12 +34,13 @@ export const createLeaderboardEmbed = async (
 
     if (device == "mobile") {
         for (let i = 0; i < pagePlayers.length; i++) {
-            const playerPlace = i + 1 + (10 * (pageNumber - 1));
+            const playerPlace = i + 1 + (playersPerPage * (pageNumber - 1));
 
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
 
             var emoji = getRankEmoji(pagePlayers[i], guildRecord);
 
+			wlr = Math.round(wlr * 100) / 100;
             fields.push({name: " ", value: `**${playerPlace}.** <@${pagePlayers[i].discordId}> - ${emoji}${pagePlayers[i].rating} - ${wlr}`, inline: false});
         }
     } else if (device == "pc") {
@@ -47,7 +48,7 @@ export const createLeaderboardEmbed = async (
         var ratings = "";
         var winlossratio = "";
         for (let i = 0; i < pagePlayers.length; i++) {
-            const playerPlace = i + 1 + (10 * (pageNumber - 1));
+            const playerPlace = i + 1 + (playersPerPage * (pageNumber - 1));
 
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
 

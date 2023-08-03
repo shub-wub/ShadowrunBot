@@ -105,6 +105,7 @@ export interface IQueue extends mongoose.Document {
 
 export interface IMatch extends mongoose.Document {
     messageId: string,
+    queueId: string,
     map1Winner: string,
     map2Winner: string,
     map3Winner: string,

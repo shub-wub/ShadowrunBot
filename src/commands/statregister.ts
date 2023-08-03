@@ -15,7 +15,7 @@ const command: SlashCommand = {
     execute: (interaction, client) => {
         statRegister(interaction);
     },
-    cooldown: 10
+    //cooldown: 10
 }
 
 export default command;

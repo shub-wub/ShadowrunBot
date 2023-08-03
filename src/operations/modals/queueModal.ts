@@ -1,18 +1,4 @@
-import {
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle,
-	CacheType,
-	Client,
-	CommandInteraction,
-	EmbedBuilder,
-	MessageActionRowComponentBuilder,
-	ModalBuilder,
-	ModalSubmitInteraction,
-	TextChannel,
-	TextInputBuilder,
-	TextInputStyle,
-} from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CacheType, Client, CommandInteraction, EmbedBuilder, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { getThemeColor, mongoError } from "#utilities";
 import { IGuild } from "../../types";
 import Guild from "#schemas/guild";

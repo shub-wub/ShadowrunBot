@@ -6,28 +6,28 @@ import Queue from "#schemas/queue";
 import { MongooseError } from "mongoose";
 
 export const openQueueModal = (interaction: CommandInteraction<CacheType>): void => {
-	const modal = new ModalBuilder()
-		.setCustomId("queue")
-		.setTitle("Create a queue")
-		.addComponents([
-			new ActionRowBuilder<TextInputBuilder>().addComponents([
-				new TextInputBuilder()
-					.setCustomId("maxRank")
-					.setLabel("Max Rank")
-					.setValue("3000")
-					.setRequired(true)
-					.setStyle(TextInputStyle.Short),
-			]),
+    const modal = new ModalBuilder()
+        .setCustomId("queue")
+        .setTitle("Create a queue")
+        .addComponents([
             new ActionRowBuilder<TextInputBuilder>().addComponents([
-				new TextInputBuilder()
-					.setCustomId("minRank")
-					.setLabel("Min Rank")
-					.setValue("0")
-					.setRequired(true)
-					.setStyle(TextInputStyle.Short),
-			]),
-		]);
-	interaction.showModal(modal);
+                new TextInputBuilder()
+                    .setCustomId("maxRank")
+                    .setLabel("Max Rank")
+                    .setValue("3000")
+                    .setRequired(true)
+                    .setStyle(TextInputStyle.Short),
+            ]),
+            new ActionRowBuilder<TextInputBuilder>().addComponents([
+                new TextInputBuilder()
+                    .setCustomId("minRank")
+                    .setLabel("Min Rank")
+                    .setValue("0")
+                    .setRequired(true)
+                    .setStyle(TextInputStyle.Short),
+            ]),
+        ]);
+    interaction.showModal(modal);
 };
 
 export const submitQueueModal = async (interaction: ModalSubmitInteraction<CacheType>, client: Client): Promise<void> => {
@@ -58,24 +58,24 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
                 .setCustomId('removeQueue')
                 .setLabel('Remove Me')
                 .setStyle(ButtonStyle.Danger),
-            ]);
+        ]);
     const activeButtonRow2 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
-            .addComponents([
-                new ButtonBuilder()
-                    .setCustomId('readyUpPlayer')
-                    .setLabel('Ready Up Player')
-                    .setStyle(ButtonStyle.Danger),
-                new ButtonBuilder()
-                    .setCustomId('queuePlayer')
-                    .setLabel('Queue Player')
-                    .setStyle(ButtonStyle.Danger),
-                ]);
+        .addComponents([
+            new ButtonBuilder()
+                .setCustomId('readyUpPlayer')
+                .setLabel('Ready Up Player')
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId('queuePlayer')
+                .setLabel('Queue Player')
+                .setStyle(ButtonStyle.Danger),
+        ]);
     var guildRecord = await Guild.findOne<IGuild>({ guildId: interaction.guildId });
-    if(guildRecord) {
+    if (guildRecord) {
         var channel = await client.channels.fetch(guildRecord.queueChannelId);
         var message = await (channel as TextChannel).send({
-            embeds: [newEmbed], 
-            components: [activeButtonRow1, activeButtonRow2]
+            embeds: [newEmbed],
+            components: [activeButtonRow1] //, activeButtonRow2
         });
         try {
             await new Queue({

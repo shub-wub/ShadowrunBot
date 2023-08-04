@@ -1,5 +1,5 @@
 import { getThemeColor, mongoError } from "#utilities";
-import {CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, } from "discord.js";
+import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, } from "discord.js";
 import QueuePlayer from "#schemas/queuePlayer";
 import Player from "#schemas/player";
 import Guild from "#schemas/guild";
@@ -13,14 +13,14 @@ import { generateTeams, getRankEmoji } from "#operations";
 export const processQueue = async (interaction: ButtonInteraction, client: Client, playerReady = false, overridePlayer?: string): Promise<void> => {
     var userId = overridePlayer ? overridePlayer : interaction.user.id;
 
-	const receivedEmbed = interaction.message.embeds[0];
-	const queueEmbed = EmbedBuilder.from(receivedEmbed);
+    const receivedEmbed = interaction.message.embeds[0];
+    const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
-    const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
+    const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: userId }, { matchMessageId: { $exists: false } }]);
     // TODO check if they are already in a match for this queue. 
     // I think we will have to set a bool on the Iqueueplayer record for if the match is finished to check here
     //const inAMatchQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
-    const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
+    const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
 
@@ -35,7 +35,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 return;
             }
 
-            if(!queryResults[3]) return;
+            if (!queryResults[3]) return;
             if (!queryResults[0]) {
                 await interaction.reply({
                     content: `You must first do /statregister before you can play ranked.`,
@@ -60,9 +60,9 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
             }
 
             // if the player is ready we want to save to the DB
-            if(playerReady) {
+            if (playerReady) {
                 var playerIndex = queryResults[2].findIndex(p => p.discordId == queryResults[0]?.discordId);
-                if(playerIndex >= 8) {
+                if (playerIndex >= 8) {
                     await interaction.reply({
                         content: `You can not ready up before the first 8 players.`,
                         ephemeral: true
@@ -72,12 +72,12 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 queryResults[1][0].ready = true;
                 await queryResults[1][0].save().catch(console.error);
             }
-            var updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
+            var updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
 
             var playersReady = updatedQueuePlayers.filter(p => p.ready);
 
             // check if there are 8 players ready
-            if(playersReady.length == 8) {
+            if (playersReady.length == 8) {
                 await createMatch(interaction, client, playersReady);
                 updatedQueuePlayers = updatedQueuePlayers.filter(p => !p.ready);
                 //updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
@@ -100,11 +100,11 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 updatedQueuePlayers.push(queueRecord);
             }
 
-            if(updatedQueuePlayers.length >= 8 && !playerReady) {
+            if (updatedQueuePlayers.length >= 8 && !playerReady) {
                 for (const uqp of updatedQueuePlayers) {
                     var user = client.users.cache.get(uqp.discordId);
-                    if(!user) continue;
-                    await user.send(`Hello, your match is ready! Please ready up at ${interaction.channel}`).catch((e:any)=>{});
+                    if (!user) continue;
+                    await user.send(`Hello, your match is ready! Please ready up at ${interaction.channel}`).catch((e: any) => { });
                 }
             }
             rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, queryResults[3], false);
@@ -116,70 +116,70 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
 }
 
 export const removeUserFromQueue = async (interaction: ButtonInteraction): Promise<void> => {
-    const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: interaction.user.id}, { matchMessageId: { $exists: false } }]);
+    const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: interaction.user.id }, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
 
     Promise.all([queueUserQuery, guildQuery])
-    .then(async (queryResults: [IQueuePlayer[], IGuild | null]) => {
-        if(!queryResults[1]) return;
-        if (queryResults[0].length == 0) {
-            await interaction.reply({
-                content: `You are not in the queue so you cannot remove yourself.`,
-                ephemeral: true
-            });
+        .then(async (queryResults: [IQueuePlayer[], IGuild | null]) => {
+            if (!queryResults[1]) return;
+            if (queryResults[0].length == 0) {
+                await interaction.reply({
+                    content: `You are not in the queue so you cannot remove yourself.`,
+                    ephemeral: true
+                });
+                return;
+            }
+
+            try {
+                await QueuePlayer.deleteOne({ _id: queryResults[0][0]._id });
+                var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
+            } catch (error) {
+                mongoError(error as MongooseError);
+                console.log(`There was an error deleting the player from the queue in the database.`)
+                return;
+            }
+
+            rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueue, queryResults[1], false);
+        }).catch(async error => {
+            mongoError(error);
+            console.log(`There was an error getting data from the database.`)
             return;
-        }
-    
-        try {
-            await QueuePlayer.deleteOne({ _id: queryResults[0][0]._id });
-            var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
-        } catch(error) {
-            mongoError(error as MongooseError);
-            console.log(`There was an error deleting the player from the queue in the database.`)
-            return;
-        }
-    
-        rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueue, queryResults[1], false);
-    }).catch(async error => {
-        mongoError(error);
-        console.log(`There was an error getting data from the database.`)
-        return;
-    });
+        });
 }
 
 export const removeUnreadiedUsersFromQueue = async (interaction: ButtonInteraction, queueEmbedMessage: Message<boolean>, deferred: boolean): Promise<void> => {
-    const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { ready: false}, { matchMessageId: { $exists: false } }]);
+    const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { ready: false }, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
 
     Promise.all([queueUsersQuery, guildQuery])
-    .then(async (queryResults: [IQueuePlayer[], IGuild | null]) => {
-        if(!queryResults[1]) return;
-    
-        try {
-            await Promise.all(queryResults[0].map(async (u) => {
-                await QueuePlayer.deleteOne({ _id: u._id });
-            }));
-            var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
-            await Promise.all(updatedQueue.map(async (u) => {
-                u.ready = false;
-                await u.save();
-            }));
-        } catch(error) {
-            mongoError(error as MongooseError);
-            console.log(`There was an error deleting the player from the queue in the database.`)
+        .then(async (queryResults: [IQueuePlayer[], IGuild | null]) => {
+            if (!queryResults[1]) return;
+
+            try {
+                await Promise.all(queryResults[0].map(async (u) => {
+                    await QueuePlayer.deleteOne({ _id: u._id });
+                }));
+                var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
+                await Promise.all(updatedQueue.map(async (u) => {
+                    u.ready = false;
+                    await u.save();
+                }));
+            } catch (error) {
+                mongoError(error as MongooseError);
+                console.log(`There was an error deleting the player from the queue in the database.`)
+                return;
+            }
+
+            rebuildQueue(interaction, queueEmbed, queueEmbedMessage, updatedQueue, queryResults[1], deferred);
+        }).catch(async error => {
+            mongoError(error);
+            console.log(`There was an error getting data from the database.`)
             return;
-        }
-    
-        rebuildQueue(interaction, queueEmbed, queueEmbedMessage, updatedQueue, queryResults[1], deferred);
-    }).catch(async error => {
-        mongoError(error);
-        console.log(`There was an error getting data from the database.`)
-        return;
-    });
+        });
 }
 
 export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[], guildRecord: IGuild, maps: IMap[]): any => {
@@ -198,9 +198,9 @@ export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[
         team2Total += team2Players[i].rating;
         team2 += `<@${team2Players[i].discordId}> ${emoji}${team2Players[i].rating}\n`;
     }
-    fields.push({name: `Maps`, value: `${maps[0].name}\n${maps[1].name}\n${maps[2].name}`, inline: false});
-    fields.push({name: `Team 1(${team1Total})`, value: team1, inline: true});
-    fields.push({name: `Team 2(${team2Total})`, value: team2, inline: true});
+    fields.push({ name: `Maps`, value: `${maps[0].name}\n${maps[1].name}\n${maps[2].name}`, inline: false });
+    fields.push({ name: `Team 1(${team1Total})`, value: team1, inline: true });
+    fields.push({ name: `Team 2(${team2Total})`, value: team2, inline: true });
     var randomTeam = Math.floor(Math.random() * 2) + 1;
     const embed: any = new EmbedBuilder()
         .setTitle(`Team ${randomTeam} picks server and side first`)
@@ -210,27 +210,27 @@ export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[
 };
 
 export const createMatchButtonRow1 = (g1: boolean, g2: boolean, g3: boolean): ActionRowBuilder<ButtonBuilder> => {
-	const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
-	const team1Game1Button = new ButtonBuilder()
-		.setCustomId("scoret1g1")
-		.setLabel("Score T1G1")
+    const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
+    const team1Game1Button = new ButtonBuilder()
+        .setCustomId("scoret1g1")
+        .setLabel("Score T1G1")
         .setDisabled(g1)
-		.setStyle(ButtonStyle.Primary);
+        .setStyle(ButtonStyle.Primary);
     const team1Game2Button = new ButtonBuilder()
-		.setCustomId("scoret1g2")
-		.setLabel("Score T1G2")
+        .setCustomId("scoret1g2")
+        .setLabel("Score T1G2")
         .setDisabled(g2)
-		.setStyle(ButtonStyle.Primary);
+        .setStyle(ButtonStyle.Primary);
     const team1Game3Button = new ButtonBuilder()
-		.setCustomId("scoret1g3")
-		.setLabel("Score T1G3")
+        .setCustomId("scoret1g3")
+        .setLabel("Score T1G3")
         .setDisabled(g3)
-		.setStyle(ButtonStyle.Primary);
-	buttonRow.addComponents(team1Game1Button, team1Game2Button, team1Game3Button);
-	return buttonRow;
+        .setStyle(ButtonStyle.Primary);
+    buttonRow.addComponents(team1Game1Button, team1Game2Button, team1Game3Button);
+    return buttonRow;
 };
 export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): ActionRowBuilder<ButtonBuilder> => {
-	const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
+    const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
     const team2Game1Button = new ButtonBuilder()
         .setCustomId("scoret2g1")
         .setLabel("Score T2G1")
@@ -247,7 +247,7 @@ export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): Ac
         .setDisabled(g3)
         .setStyle(ButtonStyle.Danger);
     buttonRow.addComponents(team2Game1Button, team2Game2Button, team2Game3Button);
-	return buttonRow;
+    return buttonRow;
 };
 
 export const createMatch = async (interaction: ButtonInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[]): Promise<void> => {
@@ -318,12 +318,12 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
             await Promise.all(queuePlayers.map(qp => {
                 qp.matchMessageId = message.id;
                 var team1Player = teams[1].find(p => p.discordId == qp.discordId);
-                if(team1Player)
+                if (team1Player)
                     qp.team = 1;
                 else
                     qp.team = 2;
                 return qp.save();
-              }));
+            }));
         } catch (error) {
             mongoError(error as MongooseError);
             console.log(`There was an error adding the match to the database.`)
@@ -338,28 +338,28 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
 
 let countdownInterval: NodeJS.Timeout;
 export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, queuePlayers: string, queueCount: number, disableReadyButton: boolean, isInReadyUpState: boolean, deferred: boolean): Promise<void> => {
-    if(!queuePlayers) queuePlayers = "\u200b";
+    if (!queuePlayers) queuePlayers = "\u200b";
     var currentTime = new Date();
     const minutesToReady = 1;
     const currentTimePlus3Minutes = new Date(currentTime.getTime() + minutesToReady * 60000);
     const unixTimestamp = Math.floor(currentTimePlus3Minutes.getTime() / 1000);
-    if(isInReadyUpState) {
+    if (isInReadyUpState) {
         queueEmbed.setFields([{
-                name: `Ready Up Timer`,
-                value: `Ending <t:${unixTimestamp}:R>`,
-                inline: false
-            }, {
-                name: `Players in Queue - ${queueCount}`,
-                value: queuePlayers,
-                inline: false
-            }
+            name: `Ready Up Timer`,
+            value: `Ending <t:${unixTimestamp}:R>`,
+            inline: false
+        }, {
+            name: `Players in Queue - ${queueCount}`,
+            value: queuePlayers,
+            inline: false
+        }
         ]);
     } else {
         queueEmbed.setFields([{
-                name: `Players in Queue - ${queueCount}`,
-                value: queuePlayers,
-                inline: false
-            }
+            name: `Players in Queue - ${queueCount}`,
+            value: queuePlayers,
+            inline: false
+        }
         ]);
     }
 
@@ -369,7 +369,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
                 .setCustomId('queue')
                 .setLabel('Queue')
                 .setStyle(ButtonStyle.Success),
-                //.setDisabled(!disableReadyButton),
+            //.setDisabled(!disableReadyButton),
             new ButtonBuilder()
                 .setCustomId('readyup')
                 .setLabel('Ready Up')
@@ -379,29 +379,29 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
                 .setCustomId('removeQueue')
                 .setLabel('Remove Me')
                 .setStyle(ButtonStyle.Danger),
-            ]);
+        ]);
     const activeButtonRow2 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
-            .addComponents([
-                new ButtonBuilder()
-                    .setCustomId('readyUpPlayer')
-                    .setLabel('Ready Up Player')
-                    .setStyle(ButtonStyle.Danger),
-                new ButtonBuilder()
-                    .setCustomId('queuePlayer')
-                    .setLabel('Queue Player')
-                    .setStyle(ButtonStyle.Danger),
-                ]);
+        .addComponents([
+            new ButtonBuilder()
+                .setCustomId('readyUpPlayer')
+                .setLabel('Ready Up Player')
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId('queuePlayer')
+                .setLabel('Queue Player')
+                .setStyle(ButtonStyle.Danger),
+        ]);
     await queueEmbedMessage.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1, activeButtonRow2]
+        components: [activeButtonRow1] //, activeButtonRow2
     });
-    if(!deferred) {
+    if (!deferred) {
         deferred = true;
         await interaction.deferUpdate().catch(error => {
             console.log(error);
         });
     }
-    if(isInReadyUpState) {
+    if (isInReadyUpState) {
         if (countdownInterval) {
             clearInterval(countdownInterval);
         }
@@ -413,7 +413,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
             if (remainingTime === 0) {
                 clearInterval(countdownInterval);
                 removeUnreadiedUsersFromQueue(interaction, queueEmbedMessage, deferred);
-                }
+            }
         }, 1000);
     }
 
@@ -439,17 +439,17 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
 
     var queuePlayers = '';
     for (let i = 0; i < updatedQueuePlayers.length; i++) {
-        if(updatedQueuePlayers[i].matchMessageId) continue;
+        if (updatedQueuePlayers[i].matchMessageId) continue;
         var player = await Player.findOne<IPlayer>({ discordId: updatedQueuePlayers[i].discordId });
-        if(!player) return;
+        if (!player) return;
         var emoji = getRankEmoji(player, guild);
 
         // player joined the queue and there are 8 players and they are one of the first 8
-        if(addUnreadyEmoji && !updatedQueuePlayers[i].ready && i < 8) {
+        if (addUnreadyEmoji && !updatedQueuePlayers[i].ready && i < 8) {
             queuePlayers += `:x:<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
         }
         // player joined the queue and there are 8 players and they are NOT one of the first 8
-        else if(addUnreadyEmoji && !updatedQueuePlayers[i].ready && i >= 8) {
+        else if (addUnreadyEmoji && !updatedQueuePlayers[i].ready && i >= 8) {
             queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
         }
         // player joined the queue and there are NOT 8 players

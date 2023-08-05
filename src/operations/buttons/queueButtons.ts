@@ -334,6 +334,7 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
         console.log(`There was an error getting data from the database for the match.`)
         return;
     });
+    clearInterval(countdownInterval);
 }
 
 let countdownInterval: NodeJS.Timeout;

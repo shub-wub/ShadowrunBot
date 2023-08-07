@@ -100,8 +100,10 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 
 	const lobbyCreate = new Map({ name: "Lobby Small (Attrition)" }).save();
 	const lobbyExtractionCreate = new Map({ name: "Lobby (Extraction)" }).save();
+	const lobbyAttritionCreate = new Map({ name: "Lobby (Attrition)" }).save();
 	const nerveCenterCreate = new Map({ name: "Nerve Center Small (Attrition)" }).save();
 	const nerveCenterExtractionCreate = new Map({ name: "Nerve Center (Extraction)" }).save();
+	const nerveCenterAttritionCreate = new Map({ name: "Nerve Center (Attrition)" }).save();
 	const pinnacleCreate = new Map({ name: "Pinnacle (Attrition)" }).save();
 	const pinnacleExtractionCreate = new Map({ name: "Pinnacle (Extraction)" }).save();
 	const powerStationCreate = new Map({ name: "Power Station (Attrition)" }).save();
@@ -124,8 +126,10 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		diamondRoleCreate as Promise<Role>,
 		lobbyCreate,
 		lobbyExtractionCreate,
+		lobbyAttritionCreate,
 		nerveCenterCreate,
 		nerveCenterExtractionCreate,
+		nerveCenterAttritionCreate,
 		pinnacleCreate,
 		pinnacleExtractionCreate,
 		powerStationCreate,

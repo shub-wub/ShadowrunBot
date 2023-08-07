@@ -16,7 +16,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
-    const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: userId }, { matchMessageId: { $exists: false } }]);
+    const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: userId }]);
     // TODO check if they are already in a match for this queue. 
     // I think we will have to set a bool on the Iqueueplayer record for if the match is finished to check here
     //const inAMatchQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
@@ -25,7 +25,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
 
     Promise.all([playerQuery, queueUserQuery, queueAllPlayers, guildQuery, queueQuery])
-        .then(async (queryResults: [IPlayer | null, IQueuePlayer[], IQueuePlayer[], IGuild | null, IQueue | null]) => {
+        .then(async (queryResults: [IPlayer | null, IQueuePlayer | null, IQueuePlayer[], IGuild | null, IQueue | null]) => {
 
             if (queryResults[0]?.isBanned) {
                 await interaction.reply({
@@ -43,7 +43,15 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 });
                 return;
             }
-            if (queryResults[1].length > 0 && !playerReady) {
+            if (!queryResults[1]) return;
+            if (queryResults[1]?.matchMessageId) {
+                await interaction.reply({
+                    content: `You have an unscored match. You must wait until the match is scored until you can queue again.`,
+                    ephemeral: true
+                });
+                return;
+            }
+            if (queryResults[1] && queryResults[1].messageId === queryResults[4]?.messageId) {
                 await interaction.reply({
                     content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
                     ephemeral: true
@@ -69,8 +77,8 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     });
                     return;
                 }
-                queryResults[1][0].ready = true;
-                await queryResults[1][0].save().catch(console.error);
+                queryResults[1].ready = true;
+                await queryResults[1].save().catch(console.error);
             }
             var updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
 
@@ -100,6 +108,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 updatedQueuePlayers.push(queueRecord);
             }
 
+            /*
             if (updatedQueuePlayers.length >= 8 && !playerReady) {
                 for (const uqp of updatedQueuePlayers) {
                     var user = client.users.cache.get(uqp.discordId);
@@ -107,6 +116,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     await user.send(`Hello, your match is ready! Please ready up at ${interaction.channel}`).catch((e: any) => { });
                 }
             }
+            */
             rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, queryResults[3], false);
         }).catch(async error => {
             mongoError(error);

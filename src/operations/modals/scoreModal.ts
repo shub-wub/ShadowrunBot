@@ -1,11 +1,12 @@
 import { ActionRowBuilder, ButtonInteraction, CacheType, Client, Embed, EmbedBuilder, Guild, GuildMember, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle, Permissions, PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import { getThemeColor, mongoError } from "#utilities";
-import { Field, IGuild, IMap, IMatch, IPlayer, IQueuePlayer } from "../../types";
+import { Field, IGuild, IMap, IMatch, IMatchPlayer, IPlayer, IQueuePlayer } from "../../types";
 import Player from "#schemas/player";
 import GuildRecord from "#schemas/guild";
 import Queue from "#schemas/queue";
 import QueuePlayer from "#schemas/queuePlayer";
 import Match from "#schemas/match";
+import MatchPlayer from "#schemas/matchPlayer";
 import Map from "#schemas/map";
 import { MongooseError } from "mongoose";
 import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji, rebuildQueue, updateQueueEmbed } from "#operations";
@@ -192,6 +193,7 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 				match.matchWinner = "Team 2"
 		   }
 		match.save();
+		saveMatchPlayers(match, team1Players, team2Players);
 		if(match.matchWinner == "Team 1") {
 			addWinnersBackToQueue(interaction, client, team1Players, guild, match);
 		} else {
@@ -199,6 +201,12 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 		}
 		updateNames(interaction, client, team1Players.concat(team2Players), guild);
 		updateMatchEmbed(interaction, team1Players, team2Players, guild, match, playersWithPreviousRating);
+		try {
+			await QueuePlayer.deleteMany({matchMessageId: match.messageId});
+		} catch(error) {
+			mongoError(error as MongooseError);
+			console.log(`There was an error removing the players from the queueplayers in the database.`);
+		}
 	} else {
 		match.team1ReportedT1G1Rounds = 0;
 		match.team1ReportedT1G2Rounds = 0;
@@ -309,7 +317,7 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 				}).save();
 			} catch (error) {
 				mongoError(error as MongooseError);
-				console.log(`There was an error adding the player to the queue in the database.`)
+				console.log(`There was an error adding the player to the queue in the database.`);
 				return;
 			}
 			updatedWinningPlayers.push(queueRecord);
@@ -368,3 +376,30 @@ export const updateMatchEmbed = async (interaction: ModalSubmitInteraction<Cache
 		console.log(error);
 	});
 };
+
+
+export const saveMatchPlayers = async (match: IMatch, team1Players: IPlayer[], team2Players: IPlayer[]) => {
+	var matchPlayerRecord = null;
+	var matchplayers = [];
+	try {
+		for (const player of team1Players) {
+			matchplayers.push({
+				discordId: player.discordId,
+				matchMessageId: match.messageId,
+				team: 1,
+			});
+		}
+		for (const player of team2Players) {
+			matchplayers.push({
+				discordId: player.discordId,
+				matchMessageId: match.messageId,
+				team: 2,
+			});
+		}
+		matchPlayerRecord = await MatchPlayer.insertMany(matchplayers);
+	} catch (error) {
+		mongoError(error as MongooseError);
+		console.log(`There was an error adding the player to the matchplayers in the database.`);
+		return;
+	}
+}

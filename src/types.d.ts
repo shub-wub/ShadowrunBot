@@ -128,6 +128,11 @@ export interface IMatch extends mongoose.Document {
     team2ReportedT2G2Rounds: number,
     team2ReportedT2G3Rounds: number
 }
+export interface IMatchPlayer extends mongoose.Document {
+    discordId: string,
+    matchMessageId: string,
+    team: number
+}
 
 export interface ILeaderboard extends mongoose.Document {
     messageId: string,

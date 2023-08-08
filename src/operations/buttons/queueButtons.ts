@@ -43,7 +43,6 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 });
                 return;
             }
-            if (!queryResults[1]) return;
             if (queryResults[1]?.matchMessageId) {
                 await interaction.reply({
                     content: `You have an unscored match. You must wait until the match is scored until you can queue again.`,
@@ -65,6 +64,13 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     ephemeral: true
                 });
                 return;
+            }
+            if (!queryResults[1]) {
+                queryResults[1] = new QueuePlayer({
+                    discordId: userId,
+                    messageId: interaction.message.id,
+                    ready: false,
+                })
             }
 
             // if the player is ready we want to save to the DB

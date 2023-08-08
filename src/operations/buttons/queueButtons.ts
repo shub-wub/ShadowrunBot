@@ -16,7 +16,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
-    const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: userId }]);
+    const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
     // TODO check if they are already in a match for this queue. 
     // I think we will have to set a bool on the Iqueueplayer record for if the match is finished to check here
     //const inAMatchQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
@@ -43,7 +43,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 });
                 return;
             }
-            if (queryResults[1]?.matchMessageId) {
+            if (typeof queryResults[1]?.matchMessageId !== 'undefined') {
                 await interaction.reply({
                     content: `You have an unscored match. You must wait until the match is scored until you can queue again.`,
                     ephemeral: true

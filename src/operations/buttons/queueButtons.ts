@@ -10,7 +10,7 @@ import { Field, IGuild, IPlayer, IQueue, IQueuePlayer, IMap } from "../../types"
 import { MongooseError } from "mongoose";
 import { generateTeams, getRankEmoji } from "#operations";
 
-export const processQueue = async (interaction: ButtonInteraction, client: Client, playerReady = false, overridePlayer?: string): Promise<void> => {
+export const processQueue = async (interaction: ButtonInteraction, client: Client, overridePlayer?: string): Promise<void> => {
     var userId = overridePlayer ? overridePlayer : interaction.user.id;
 
     const receivedEmbed = interaction.message.embeds[0];
@@ -27,7 +27,13 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     Promise.all([playerQuery, queueUserQuery, queueAllPlayers, guildQuery, queueQuery])
         .then(async (queryResults: [IPlayer | null, IQueuePlayer[], IQueuePlayer[], IGuild | null, IQueue | null]) => {
 
-            if (queryResults[0]?.isBanned) {
+            var player = queryResults[0];
+            var queueUser = queryResults[1];
+            var queuePlayers = queryResults[2];
+            var guild = queryResults[3];
+            var queue = queryResults[4];
+
+            if (player?.isBanned) {
                 await interaction.reply({
                     content: `You have been banned from ranked until you appeal or the ban time is up.`,
                     ephemeral: true
@@ -35,79 +41,56 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 return;
             }
 
-            if (!queryResults[3]) return;
-            if (!queryResults[0]) {
+            if (!guild) return;
+            if (!player) {
                 await interaction.reply({
                     content: `You must first do /statregister before you can play ranked.`,
                     ephemeral: true
                 });
                 return;
             }
-            if (queryResults[1].length > 0 && !playerReady) {
+
+            if (queueUser.length > 0) {
                 await interaction.reply({
                     content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
                     ephemeral: true
                 });
                 return;
             }
-            if (!queryResults[4]) return;
-            if (!(queryResults[0].rating >= queryResults[4].rankMin && queryResults[0].rating <= queryResults[4].rankMax)) {
+
+            if (!queue) return;
+            if (!(player.rating >= queue.rankMin && player.rating <= queue.rankMax)) {
                 await interaction.reply({
-                    content: `Your rating: ${queryResults[0].rating} must be between ${queryResults[4].rankMin} and ${queryResults[4].rankMax}`,
+                    content: `Your rating: ${player.rating} must be between ${queue.rankMin} and ${queue.rankMax}`,
                     ephemeral: true
                 });
                 return;
             }
 
-            // if the player is ready we want to save to the DB
-            if (playerReady) {
-                var playerIndex = queryResults[2].findIndex(p => p.discordId == queryResults[0]?.discordId);
-                if (playerIndex >= 8) {
-                    await interaction.reply({
-                        content: `You can not ready up before the first 8 players.`,
-                        ephemeral: true
-                    });
-                    return;
-                }
-                queryResults[1][0].ready = true;
-                await queryResults[1][0].save().catch(console.error);
+            var queueRecord = null;
+            try {
+                queueRecord = await new QueuePlayer({
+                    discordId: userId,
+                    messageId: interaction.message.id,
+                    queuePosition: queuePlayers.length + 1
+                }).save();
+            } catch (error) {
+                mongoError(error as MongooseError);
+                console.log(`There was an error adding the player to the queue in the database.`)
+                return;
             }
-            var updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
+            queuePlayers.push(queueRecord);
 
-            var playersReady = updatedQueuePlayers.filter(p => p.ready);
-
-            // check if there are 8 players ready
-            if (playersReady.length == 8) {
-                await createMatch(interaction, client, playersReady);
-                updatedQueuePlayers = updatedQueuePlayers.filter(p => !p.ready);
-                //updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { matchMessageId: { $exists: false } }]);
-            }
-
-            // if playerReady = false then they joined the queue
-            if (!playerReady) {
-                var queueRecord = null;
-                try {
-                    queueRecord = await new QueuePlayer({
-                        discordId: userId,
-                        messageId: interaction.message.id,
-                        ready: false,
-                    }).save();
-                } catch (error) {
-                    mongoError(error as MongooseError);
-                    console.log(`There was an error adding the player to the queue in the database.`)
-                    return;
-                }
-                updatedQueuePlayers.push(queueRecord);
-            }
-
-            if (updatedQueuePlayers.length >= 8 && !playerReady) {
-                for (const uqp of updatedQueuePlayers) {
-                    var user = client.users.cache.get(uqp.discordId);
-                    if (!user) continue;
-                    await user.send(`Hello, your match is ready! Please ready up at ${interaction.channel}`).catch((e: any) => { });
+            if (queuePlayers.length >= 8) {
+                for (const uqp of queuePlayers) {
+                    if (uqp.queuePosition <= 8) {
+                        var user = client.users.cache.get(uqp.discordId);
+                        if (!user) continue;
+                        //await user.send(`Hello, your match is ready! Please join the players in the ranked voice channel within 5 minutes.`).catch((e: any) => { });
+                    }
                 }
             }
-            rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, queryResults[3], false);
+            rebuildQueue(interaction, queueEmbed, interaction.message, queuePlayers, guild, queue, false);
         }).catch(async error => {
             mongoError(error);
             console.log(`There was an error getting data from the database for user: ${userId}`)
@@ -115,14 +98,59 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
         });
 }
 
-export const removeUserFromQueue = async (interaction: ButtonInteraction): Promise<void> => {
-    const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: interaction.user.id }, { matchMessageId: { $exists: false } }]);
+export const launchMatch = async (interaction: ButtonInteraction, client: Client) => {
+    const receivedEmbed = interaction.message.embeds[0];
+    const queueEmbed = EmbedBuilder.from(receivedEmbed);
+    const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([
+        { messageId: interaction.message.id }, 
+        { matchMessageId: { $exists: false } }
+    ]);
+    const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
+    const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
+    var queuePlayersTop8Query = QueuePlayer.find<IQueuePlayer>().and([
+        { messageId: interaction.message.id }, 
+        { matchMessageId: { $exists: false } },
+        { queuePosition: { $lte: 8 } }
+    ]);
+
+    Promise.all([queueAllPlayers, queuePlayersTop8Query, guildQuery, queueQuery])
+        .then(async (queryResults: [IQueuePlayer[], IQueuePlayer[], IGuild | null, IQueue | null]) => {
+
+            var queuePlayers = queryResults[0];
+            var queuePlayersTop8 = queryResults[1];
+            var guild = queryResults[2];
+            var queue = queryResults[3];
+
+            if (!guild) return;
+
+            if (queuePlayersTop8.length == 8) {
+                createMatch(interaction, client, queuePlayersTop8);
+                //removeMatchPlayersFromQueue();
+                rebuildQueue(interaction, queueEmbed, interaction.message, queuePlayers, guild, queue as IQueue, false);
+            } else {
+                await interaction.reply({
+                    content: `There are not yet 8 players in the queue for you to launch the match.`,
+                    ephemeral: true
+                });
+            }
+        }).catch(async error => {
+            mongoError(error);
+            console.log(`There was an error launching the match.` + error)
+            return;
+        });
+}
+
+export const removeUserFromQueue = async (interaction: ButtonInteraction, overridePlayer?: string): Promise<void> => {
+    var userId = overridePlayer ? overridePlayer : interaction.user.id;
+    const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: userId }, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
+    const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
 
-    Promise.all([queueUserQuery, guildQuery])
-        .then(async (queryResults: [IQueuePlayer[], IGuild | null]) => {
+    Promise.all([queueUserQuery, guildQuery, queueQuery])
+        .then(async (queryResults: [IQueuePlayer[], IGuild | null, IQueue | null]) => {
+            var queue = queryResults[2];
             if (!queryResults[1]) return;
             if (queryResults[0].length == 0) {
                 await interaction.reply({
@@ -141,40 +169,7 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction): Promi
                 return;
             }
 
-            rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueue, queryResults[1], false);
-        }).catch(async error => {
-            mongoError(error);
-            console.log(`There was an error getting data from the database.`)
-            return;
-        });
-}
-
-export const removeUnreadiedUsersFromQueue = async (interaction: ButtonInteraction, queueEmbedMessage: Message<boolean>, deferred: boolean): Promise<void> => {
-    const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { ready: false }, { matchMessageId: { $exists: false } }]);
-    const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
-    const receivedEmbed = interaction.message.embeds[0];
-    const queueEmbed = EmbedBuilder.from(receivedEmbed);
-
-    Promise.all([queueUsersQuery, guildQuery])
-        .then(async (queryResults: [IQueuePlayer[], IGuild | null]) => {
-            if (!queryResults[1]) return;
-
-            try {
-                await Promise.all(queryResults[0].map(async (u) => {
-                    await QueuePlayer.deleteOne({ _id: u._id });
-                }));
-                var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
-                await Promise.all(updatedQueue.map(async (u) => {
-                    u.ready = false;
-                    await u.save();
-                }));
-            } catch (error) {
-                mongoError(error as MongooseError);
-                console.log(`There was an error deleting the player from the queue in the database.`)
-                return;
-            }
-
-            rebuildQueue(interaction, queueEmbed, queueEmbedMessage, updatedQueue, queryResults[1], deferred);
+            rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueue, queryResults[1], queue as IQueue, false);
         }).catch(async error => {
             mongoError(error);
             console.log(`There was an error getting data from the database.`)
@@ -334,19 +329,17 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
         console.log(`There was an error getting data from the database for the match.`)
         return;
     });
-    clearInterval(countdownInterval);
 }
 
-let countdownInterval: NodeJS.Timeout;
-export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, queuePlayers: string, queueCount: number, disableReadyButton: boolean, isInReadyUpState: boolean, deferred: boolean): Promise<void> => {
+export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, queuePlayers: string, queueCount: number, isInLaunchState: boolean, deferred: boolean): Promise<void> => {
     if (!queuePlayers) queuePlayers = "\u200b";
     var currentTime = new Date();
-    const minutesToReady = 1;
-    const currentTimePlus3Minutes = new Date(currentTime.getTime() + minutesToReady * 60000);
-    const unixTimestamp = Math.floor(currentTimePlus3Minutes.getTime() / 1000);
-    if (isInReadyUpState) {
+    const minutesToReady = 5;
+    const currentTimePlusMinutesToReady = new Date(currentTime.getTime() + minutesToReady * 60000);
+    const unixTimestamp = Math.floor(currentTimePlusMinutesToReady.getTime() / 1000);
+    if (isInLaunchState) {
         queueEmbed.setFields([{
-            name: `Ready Up Timer`,
+            name: `Launch Timer`,
             value: `Ending <t:${unixTimestamp}:R>`,
             inline: false
         }, {
@@ -370,23 +363,22 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
                 .setCustomId('queue')
                 .setLabel('Queue')
                 .setStyle(ButtonStyle.Success),
-            //.setDisabled(!disableReadyButton),
-            new ButtonBuilder()
-                .setCustomId('readyup')
-                .setLabel('Ready Up')
-                .setStyle(ButtonStyle.Secondary)
-                .setDisabled(disableReadyButton),
             new ButtonBuilder()
                 .setCustomId('removeQueue')
                 .setLabel('Remove Me')
                 .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId('removePlayer')
+                .setLabel('Remove Player')
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId('launchMatch')
+                .setLabel('Launch Match')
+                .setStyle(ButtonStyle.Secondary)
+                .setDisabled(!isInLaunchState),
         ]);
     const activeButtonRow2 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
         .addComponents([
-            new ButtonBuilder()
-                .setCustomId('readyUpPlayer')
-                .setLabel('Ready Up Player')
-                .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
                 .setCustomId('queuePlayer')
                 .setLabel('Queue Player')
@@ -394,7 +386,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
         ]);
     await queueEmbedMessage.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1] //, activeButtonRow2
+        components: [activeButtonRow1, activeButtonRow2] 
     });
     if (!deferred) {
         deferred = true;
@@ -402,40 +394,15 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
             console.log(error);
         });
     }
-    if (isInReadyUpState) {
-        if (countdownInterval) {
-            clearInterval(countdownInterval);
-        }
-        const duration = minutesToReady * 60;
-        const targetTime = currentTime.getTime() + duration * 1000;
-        countdownInterval = setInterval(() => {
-            currentTime = new Date();
-            const remainingTime = Math.max(0, targetTime - currentTime.getTime());
-            if (remainingTime === 0) {
-                clearInterval(countdownInterval);
-                removeUnreadiedUsersFromQueue(interaction, queueEmbedMessage, deferred);
-            }
-        }, 1000);
-    }
-
 }
 
-export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, updatedQueuePlayers: IQueuePlayer[], guild: IGuild, deferred: boolean): Promise<void> => {
+export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, updatedQueuePlayers: IQueuePlayer[], guild: IGuild, queue: IQueue, deferred: boolean): Promise<void> => {
     var queueCount = Number(updatedQueuePlayers.length);
-    var addUnreadyEmoji = false;
-    var isInReadyUpState = false;
+    var isInLaunchState = false;
+    var hidePlayerNames = queue.hidePlayerNames;
+
     if (queueCount >= 8) {
-        addUnreadyEmoji = true;
-        isInReadyUpState = true;
-    }
-    if (updatedQueuePlayers && updatedQueuePlayers.length > 0) {
-        for (const qp of updatedQueuePlayers) {
-            // Check if the queue is already in a ready up state.
-            if (qp.ready === true) {
-                isInReadyUpState = true;
-                break;
-            }
-        }
+        isInLaunchState = true;
     }
 
     var queuePlayers = '';
@@ -445,23 +412,13 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
         if (!player) return;
         var emoji = getRankEmoji(player, guild);
 
-        // player joined the queue and there are 8 players and they are one of the first 8
-        if (addUnreadyEmoji && !updatedQueuePlayers[i].ready && i < 8) {
-            queuePlayers += `:x:<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
+        if (hidePlayerNames) {
+            queuePlayers += `<Player ${i + 1} ${emoji}\n`;
         }
-        // player joined the queue and there are 8 players and they are NOT one of the first 8
-        else if (addUnreadyEmoji && !updatedQueuePlayers[i].ready && i >= 8) {
+        else {
             queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
-        }
-        // player joined the queue and there are NOT 8 players
-        else if (!addUnreadyEmoji && !updatedQueuePlayers[i].ready) {
-            queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
-
-        }
-        // player readied up
-        else if (addUnreadyEmoji && updatedQueuePlayers[i].ready && i < 8) {
-            queuePlayers += `:white_check_mark:<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
         }
     }
-    updateQueueEmbed(interaction, queueEmbed, queueEmbedMessage, queuePlayers, queueCount, !addUnreadyEmoji, isInReadyUpState, deferred);
+
+    updateQueueEmbed(interaction, queueEmbed, queueEmbedMessage, queuePlayers, queueCount, isInLaunchState, deferred);
 }

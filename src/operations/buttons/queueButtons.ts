@@ -43,16 +43,16 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 });
                 return;
             }
-            if (typeof queryResults[1]?.matchMessageId !== 'undefined') {
+            if (queryResults[1] && !playerReady) {
                 await interaction.reply({
-                    content: `You have an unscored match. You must wait until the match is scored until you can queue again.`,
+                    content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
                     ephemeral: true
                 });
                 return;
             }
-            if (queryResults[1] && queryResults[1].messageId === queryResults[4]?.messageId) {
+            if (typeof queryResults[1]?.matchMessageId !== 'undefined') {
                 await interaction.reply({
-                    content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
+                    content: `You have an unscored match. You must wait until the match is scored until you can queue or ready up again.`,
                     ephemeral: true
                 });
                 return;

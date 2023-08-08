@@ -273,10 +273,7 @@ export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>
 export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, winningPlayers: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
 	// get the users waiting in the queue when the match ended
 	const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: match.queueId}, { matchMessageId: { $exists: false } }]);
-	const winnersQueueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([
-		{ messageId: match.queueId },
-		{ matchMessageId: match.messageId },
-		{
+	const winnersQueueUsersQuery = Player.find<IPlayer>().and([{
 		  $or: [
 			{ discordId: winningPlayers[0].discordId },
 			{ discordId: winningPlayers[1].discordId },
@@ -290,7 +287,7 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 	const receivedEmbed = queueEmbedMessage.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
 
-    Promise.all([queueUsersQuery, winnersQueueUsersQuery]).then(async (queryResults: [IQueuePlayer[], IQueuePlayer[]]) => {
+    Promise.all([queueUsersQuery, winnersQueueUsersQuery]).then(async (queryResults: [IQueuePlayer[], IPlayer[]]) => {
 		var queuePlayers = queryResults[0];
 		var winningPlayers = queryResults[1];
 		var updatedWinningPlayers: IQueuePlayer[] = [];
@@ -312,7 +309,7 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 			try {
 				queueRecord = await new QueuePlayer({
 					discordId: wp.discordId,
-					messageId: wp.messageId,
+					messageId: match.queueId,
 					ready: false,
 				}).save();
 			} catch (error) {

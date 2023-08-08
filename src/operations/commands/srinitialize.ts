@@ -99,11 +99,16 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 	});
 
 	const lobbyCreate = new Map({ name: "Lobby Small (Attrition)" }).save();
+	const lobbyExtractionCreate = new Map({ name: "Lobby (Extraction)" }).save();
+	const lobbyAttritionCreate = new Map({ name: "Lobby (Attrition)" }).save();
 	const nerveCenterCreate = new Map({ name: "Nerve Center Small (Attrition)" }).save();
+	const nerveCenterExtractionCreate = new Map({ name: "Nerve Center (Extraction)" }).save();
+	const nerveCenterAttritionCreate = new Map({ name: "Nerve Center (Attrition)" }).save();
 	const pinnacleCreate = new Map({ name: "Pinnacle (Attrition)" }).save();
+	const pinnacleExtractionCreate = new Map({ name: "Pinnacle (Extraction)" }).save();
 	const powerStationCreate = new Map({ name: "Power Station (Attrition)" }).save();
-	const favelaAttritionCreate = new Map({ name: "Favela (Attrition)" }).save();
-	const favelaExtractionCreate = new Map({ name: "Favela (Extraction)" }).save();
+	const pocoCreate = new Map({ name: "Poco Small (Attrition)" }).save();
+	const pocoAttritionCreate = new Map({ name: "Poco (Attrition)" }).save();
 
 	Promise.all([
 		queueChannelCreate as Promise<TextChannel>,
@@ -120,11 +125,16 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		platinumRoleCreate as Promise<Role>,
 		diamondRoleCreate as Promise<Role>,
 		lobbyCreate,
+		lobbyExtractionCreate,
+		lobbyAttritionCreate,
 		nerveCenterCreate,
+		nerveCenterExtractionCreate,
+		nerveCenterAttritionCreate,
 		pinnacleCreate,
+		pinnacleExtractionCreate,
 		powerStationCreate,
-		favelaAttritionCreate,
-		favelaExtractionCreate
+		pocoCreate,
+		pocoAttritionCreate
 	]).then(async (results) => {
 		try {
 			await new Guild({

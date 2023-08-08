@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonInteraction, CacheType, Client, Embed, EmbedBuilder, Guild, GuildMember, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle, Permissions, PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import { getThemeColor, mongoError } from "#utilities";
-import { Field, IGuild, IMap, IMatch, IPlayer, IQueuePlayer } from "../../types";
+import { Field, IGuild, IMap, IMatch, IPlayer, IQueue, IQueuePlayer } from "../../types";
 import Player from "#schemas/player";
 import GuildRecord from "#schemas/guild";
 import Queue from "#schemas/queue";
@@ -281,23 +281,14 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 	var queueEmbedMessage = await (client?.channels?.cache.get(guild.queueChannelId) as TextChannel).messages.fetch(match.queueId);
 	const receivedEmbed = queueEmbedMessage.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
+	const queueQuery = Queue.findOne<IQueue>({ messageId: match.queueId });
 
-    Promise.all([queueUsersQuery, winnersQueueUsersQuery]).then(async (queryResults: [IQueuePlayer[], IQueuePlayer[]]) => {
+    Promise.all([queueUsersQuery, winnersQueueUsersQuery, queueQuery]).then(async (queryResults: [IQueuePlayer[], IQueuePlayer[], IQueue | null]) => {
 		var queuePlayers = queryResults[0];
 		var winningPlayers = queryResults[1];
+		var queue = queryResults[2];
 		var updatedWinningPlayers: IQueuePlayer[] = [];
 		var updatedQueuePlayers: IQueuePlayer[] = [];
-		var isInReadyUpState = false;
-		if (queuePlayers[0] && queuePlayers.length > 0) {
-			for (const qp of queuePlayers) {
-				// Check if the queue is already in a ready up state.
-				if (qp.ready === true) {
-					isInReadyUpState = true;
-					console.log("1isInReadyUpState " + isInReadyUpState)
-					break;
-				}
-			}
-		}
 
 		for (const wp of winningPlayers) {
 			var queueRecord = null;
@@ -315,15 +306,14 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 			updatedWinningPlayers.push(queueRecord);
 		}
 
-		console.log("2isInReadyUpState " + isInReadyUpState)
-		if(isInReadyUpState) {
+		if(queuePlayers.length > 8) {
 			// add winners to end of queue
 			updatedQueuePlayers = queuePlayers.concat(updatedWinningPlayers);
 		} else {
 			// add players to front of queue
 			updatedQueuePlayers = updatedWinningPlayers.concat(queuePlayers);
 		}
-		rebuildQueue(interaction as unknown as ButtonInteraction<CacheType>, queueEmbed, queueEmbedMessage, updatedQueuePlayers, guild, true)
+		rebuildQueue(interaction as unknown as ButtonInteraction<CacheType>, queueEmbed, queueEmbedMessage, updatedQueuePlayers, guild, queue as IQueue, true)
     });
 }
 

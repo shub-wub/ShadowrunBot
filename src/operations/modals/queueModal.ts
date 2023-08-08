@@ -26,6 +26,14 @@ export const openQueueModal = (interaction: CommandInteraction<CacheType>): void
                     .setRequired(true)
                     .setStyle(TextInputStyle.Short),
             ]),
+            new ActionRowBuilder<TextInputBuilder>().addComponents([
+                new TextInputBuilder()
+                    .setCustomId("hidePlayerNames")
+                    .setLabel("Hide player names? (yes/no)")
+                    .setValue("yes")
+                    .setRequired(true)
+                    .setStyle(TextInputStyle.Short),
+            ]),
         ]);
     interaction.showModal(modal);
 };
@@ -33,6 +41,15 @@ export const openQueueModal = (interaction: CommandInteraction<CacheType>): void
 export const submitQueueModal = async (interaction: ModalSubmitInteraction<CacheType>, client: Client): Promise<void> => {
     var min = interaction.fields.getTextInputValue("minRank");
     var max = interaction.fields.getTextInputValue("maxRank");
+    var hidePlayerNamesfieldValue = interaction.fields.getTextInputValue("hidePlayerNames");
+    var hidePlayerNames = true;
+
+    if (hidePlayerNamesfieldValue.toLocaleLowerCase() == "yes") {
+        hidePlayerNames = true;
+    } else {
+        hidePlayerNames = false;
+    }
+
     const newEmbed = new EmbedBuilder()
         .setTitle(`${min}-${max} Queue`)
         .setColor(getThemeColor("embed"))
@@ -49,11 +66,8 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
                 .setCustomId('queue')
                 .setLabel('Queue')
                 .setStyle(ButtonStyle.Success),
-            new ButtonBuilder()
-                .setCustomId('readyup')
-                .setLabel('Ready Up')
-                .setStyle(ButtonStyle.Secondary)
-                .setDisabled(true),
+
+
             new ButtonBuilder()
                 .setCustomId('removeQueue')
                 .setLabel('Remove Me')
@@ -61,10 +75,6 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
         ]);
     const activeButtonRow2 = new ActionRowBuilder<MessageActionRowComponentBuilder>()
         .addComponents([
-            new ButtonBuilder()
-                .setCustomId('readyUpPlayer')
-                .setLabel('Ready Up Player')
-                .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
                 .setCustomId('queuePlayer')
                 .setLabel('Queue Player')
@@ -75,13 +85,14 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
         var channel = await client.channels.fetch(guildRecord.queueChannelId);
         var message = await (channel as TextChannel).send({
             embeds: [newEmbed],
-            components: [activeButtonRow1] //, activeButtonRow2
+            components: [activeButtonRow1, activeButtonRow2]
         });
         try {
             await new Queue({
                 messageId: message.id,
                 rankMin: min,
-                rankMax: max
+                rankMax: max,
+                hidePlayerNames: hidePlayerNames
             }).save();
         } catch (error) {
             mongoError(error as MongooseError);

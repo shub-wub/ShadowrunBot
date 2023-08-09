@@ -16,7 +16,8 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
-    const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
+    const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId, messageId: interaction.message.id }]);
+    //const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
     // TODO check if they are already in a match for this queue. 
     // I think we will have to set a bool on the Iqueueplayer record for if the match is finished to check here
     //const inAMatchQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
@@ -50,7 +51,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 return;
             }
 
-            if (queueUser != null && queueUser.matchMessageId == null) {
+            if (queueUser != null && queueUser.messageId == interaction.message.id) {
                 await interaction.reply({
                     content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
                     ephemeral: true
@@ -58,7 +59,15 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 return;
             }
 
-            /*if (queueUser && queueUser?.matchMessageId != null) {
+            /*if (queueUser != null && queueUser.matchMessageId == null) {
+                await interaction.reply({
+                    content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
+                    ephemeral: true
+                });
+                return;
+            }
+
+            if (queueUser && queueUser?.matchMessageId != null) {
                 await interaction.reply({
                     content: `You have an unscored match. You must wait until the match is scored until you can queue or ready up again.`,
                     ephemeral: true
@@ -104,7 +113,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        //await user.send(`Hello, your match is ready! Please join the players in the ranked voice channel within 5 minutes.`).catch((e: any) => { });
+                        await user.send(`Hello, your match is ready! Please join the players in the ranked voice channel within 5 minutes.`).catch((e: any) => { });
                     }
                 }
             }
@@ -402,7 +411,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
         ]);
     await queueEmbedMessage.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1, activeButtonRow2] 
+        components: [activeButtonRow1/*, activeButtonRow2*/] 
     });
     if (!deferred) {
         deferred = true;

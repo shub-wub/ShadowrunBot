@@ -34,7 +34,7 @@ const button: Button = {
                 new ActionRowBuilder<TextInputBuilder>().addComponents([
                     new TextInputBuilder()
                         .setCustomId("playerInput")
-                        .setLabel("Player")
+                        .setLabel("Player ID")
                         .setRequired(true)
                         .setStyle(TextInputStyle.Short),
                 ])

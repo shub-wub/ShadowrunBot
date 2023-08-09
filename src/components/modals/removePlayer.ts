@@ -7,11 +7,10 @@ const modal : Modal = {
         name: 'removePlayer'
     },
     execute: (interaction, client: Client) => {
-        var player = interaction.fields.getTextInputValue("playerInput");
-        var playerByUsername = interaction.guild?.members.cache.find(gm => gm.user.username == player);
+        var playerId = interaction.fields.getTextInputValue("playerInput");
         const currentTime = new Date(Date.now()).toLocaleString();
         console.log(currentTime + " " + interaction.user.username + " submitted player");
-        removeUserFromQueue(interaction as unknown as ButtonInteraction, playerByUsername?.user.id as string);
+        removeUserFromQueue(interaction as unknown as ButtonInteraction, playerId);
     },
     //cooldown: 10
 }

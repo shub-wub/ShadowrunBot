@@ -74,7 +74,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 });
                 return;
             }
-            if (!queueUser) {
+            if (!queueUser) {queuePlayers
                 queueUser = new QueuePlayer({
                     discordId: userId,
                     messageId: interaction.message.id,
@@ -88,7 +88,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 queueRecord = await new QueuePlayer({
                     discordId: userId,
                     messageId: interaction.message.id,
-                    queuePosition: queuePlayers.length + 1,
+                    queuePosition: null,
                     queueTime: currentTime
                 }).save();
             } catch (error) {
@@ -97,6 +97,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 return;
             }
             queuePlayers.push(queueRecord);
+            await updateQueuePositions(queuePlayers);
 
             if (queuePlayers.length >= 8) {
                 for (const uqp of queuePlayers) {
@@ -134,11 +135,10 @@ export const launchMatch = async (interaction: ButtonInteraction, client: Client
 
             if (!guild) return;
 
-            if (queuePlayersTop8.length == 8) {
+            if (queuePlayersTop8.length >= 8) {
                 await createMatch(interaction, client, queuePlayersTop8);
 
                 // get the queuePlayers again where matchMessageId is null so we remove the match players from the queue.
-                console.log("getting updated queue players");
                 var updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
                 await updateQueuePositions(updatedQueuePlayers);
 

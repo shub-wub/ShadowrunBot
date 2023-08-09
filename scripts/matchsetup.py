@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from pymongo import DESCENDING
 from pymongo.mongo_client import MongoClient
@@ -7,31 +8,31 @@ dotenv_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '.
 
 load_dotenv(dotenv_path=dotenv_path)
 databaseToken = os.getenv('databaseToken')
-database_name = os.getenv('DB_NAME', 'ShadowrunDBTest')
+database_name = os.getenv('DB_NAME', 'test')
 player_collection_name = os.getenv('PLAYER_COLLECTION_NAME', 'players')
 queue_collection_name = os.getenv('QUEUE_COLLECTION_NAME', 'queues')
 queueplayers_collection_name = os.getenv('QUEUEPLAYERS_COLLECTION_NAME', 'queueplayers')
 
-# This helps setup a queue where only one person needs to queue and ready up before the match is generated
+# This helps setup a queue where only one person needs to queue before the match is generated
 
 # Elo scores of [1050, 1026, 1009, 999, 1049, 1025, 1010, 1000] will team up the first four and the last four
 players_and_new_scores = [
     ["670444654155530240", 1050],
-    ["134760443850784769", 1026],
+    ["421558155718295553", 1026],
     ["312505608844738562", 1009],
     ["238329746671271936", 999],
     ["256566189566722048", 1049],
     ["236408429487456266", 1025],
     ["111613988076310528", 1010],
-    ["656328798551277584", 1000],
+    ["95376035620589568", 1000],
 ]
 
 exception_id = players_and_new_scores[0][0] # The first person in the above list  will not be queued up.
                                             # It allows that person to hit the "Queue" button, which will
-                                            # update the queue with everyone else and only this person needs to press "Ready".
+                                            # update the queue with everyone else
                                             # Ideally, this is the tester's Discord ID
 
-queue_message_id = "1137674987982032906" # Replace None with your queue message ID string to queue for a specific queue.
+queue_message_id = "1138885962382979183" # Replace None with your queue message ID string to queue for a specific queue.
 
 # If not queuing for a specific queue, players will be queued up to most recent queue with the following rankMin/rankMax parameters
 rankMin = 1000
@@ -59,6 +60,7 @@ def main():
         if not queue_id:
             print("No Queue found in DB with message ID", queue_message_id)
             return -1
+    i = 0
     for player_id, new_elo_score in players_and_new_scores:
         player = player_collection.find_one({"discordId": player_id})
         if not player:
@@ -66,36 +68,43 @@ def main():
             return -1
         
         filter = {'discordId': player_id}
-        new_rating_value = { '$set': {'rating': new_elo_score}}
+        new_rating_value = {'$set': {'rating': new_elo_score}}
         try:
             player_collection.update_one(filter, new_rating_value)
+            pass
         except:
             print("Could not update the elo score of player with Discord ID:", player_id)
 
         if player_id == exception_id:
             print("player_id", player_id, "with ELO score of", new_elo_score, "but not queued in")
             continue
-        queue_player = queueplayers_collection.find_one({'discordId': player['discordId'], 'messageId': queue_id, 'matchMessageId': {'$exists': False}})
-        if queue_player and queue_player['ready'] == True:
-            print("Player", player_id, "already in queue", queue_player['messageId'], "and readied.",  "Skipping.")
+
+        queue_player = queueplayers_collection.find_one({'discordId': player['discordId']})
+        if queue_player and 'matchMessageId' in queue_player:
+            print("Player is in a match and can not be queued up")
             continue
-        elif queue_player and queue_player['ready'] == False:  
-            filter = {'discordId': player_id}
-            new_ready_value = { '$set': {'ready': True}}
-            try:
-                queueplayers_collection.update_one(filter, new_ready_value)
-                print("Player", player_id, "already in queue", queue_player['messageId'] + ".",  "Changed ELO score to", new_elo_score, "and readying them up.")      
-            except:
-                print("Could not ready up player already queued with Discord ID:", player_id)
+        elif queue_player and queue_player['messageId'] == queue_message_id:
+            filter = {'_id': queue_player['_id']}
+            new_position = { '$set' : {'queuePosition': i + 1} }
+            queueplayers_collection.update_one(filter, new_position)
+            print("Player", player_id, "already in a queue", queue_player['messageId'] + ".",  "Changed their ELO score to", str(new_elo_score) + ".", "New position in queue is", i + 1)      
+            i += 1
             continue
+        elif queue_player:
+            print("Player is in another queue")
+            continue
+            
 
         queue_player = {
             'discordId': player_id,
             'messageId': queue_id,
-            'ready': True
+            'queuePosition': None, #i + 1,
+            'queueTime': datetime.now()
         }
+        print(queue_player['queueTime'])
         post_id = queueplayers_collection.insert_one(queue_player).inserted_id
-        print("player_id", player_id, "with ELO score of", new_elo_score, "queued in", queue_id, "and readied up")
+        print("player_id", player_id, "with ELO score of", new_elo_score, "queued in", queue_id, "with position", str(i + 1) + ".")
+        i += 1
 
 
 if __name__ == "__main__":

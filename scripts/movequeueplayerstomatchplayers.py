@@ -7,7 +7,7 @@ dotenv_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '.
 
 load_dotenv(dotenv_path=dotenv_path)
 databaseToken = os.getenv('databaseToken')
-database_name = os.getenv('DB_NAME', 'test')
+database_name = os.getenv('DB_NAME', 'ShadowrunDB2')
 queueplayers_collection_name = os.getenv('QUEUEPLAYERS_COLLECTION_NAME', 'queueplayers')
 matches_collection_name = os.getenv('MATCHES_COLLECTION_NAME', 'matches')
 matchplayers_collection_name = os.getenv('MATCHPLAYERS_COLLECTION_NAME', 'matchplayers')

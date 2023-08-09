@@ -49,6 +49,7 @@ def main():
         queueplayers_collection.delete_one({'id': queue_player['id']})
     
     for queue_id in queue_ids_for_deletion:
+        print(queue_id)
         queue_collection.delete_one({'messageId': queue_id})
         
 

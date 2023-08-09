@@ -23,12 +23,14 @@ def main(queue_message_id):
         print("Could not connect to MongoDB")
         return -1
     
+    print("Clearing out queue", queue_message_id)
     database = client[database_name]
     queueplayers_collection = database[queueplayers_collection_name]
     matches_collection = database[matches_collection_name]
 
 
-    queueplayers_collection.delete_many({'messageId': queue_message_id, "matchMessageId": {"$exists": False}})
+    post = queueplayers_collection.delete_many({'messageId': queue_message_id, "matchMessageId": {"$exists": False}})
+    print(post.deleted_count)
     queue_players = queueplayers_collection.find({'messageId': queue_message_id})
     for player in queue_players:
         match = matches_collection.find_one({"messageId": player['matchMessageId'], "matchWinner": {"$exists": True}})

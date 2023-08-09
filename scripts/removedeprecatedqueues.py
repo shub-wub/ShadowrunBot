@@ -12,7 +12,9 @@ player_collection_name = os.getenv('PLAYER_COLLECTION_NAME', 'players')
 queue_collection_name = os.getenv('QUEUE_COLLECTION_NAME', 'queues')
 
 
-queue_exceptions = set() # Populate with queue message ID strings of queues you want to skip and leave data for in the DB
+queue_exceptions = [  # Populate with queue message ID strings of queues you want to skip and leave data for in the DB
+    None
+    ]
 
 def main():    
     try:

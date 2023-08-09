@@ -93,6 +93,8 @@ export interface IQueuePlayer extends mongoose.Document {
     discordId: string,
     messageId: string,
     matchMessageId: string,
+    queuePosition: number,
+    queueTime: Date,
     team: number,
     ready: boolean
 }
@@ -100,7 +102,8 @@ export interface IQueuePlayer extends mongoose.Document {
 export interface IQueue extends mongoose.Document {
     messageId: string,
     rankMin: number,
-    rankMax: number
+    rankMax: number,
+    hidePlayerNames: boolean
 }
 
 export interface IMatch extends mongoose.Document {
@@ -125,6 +128,11 @@ export interface IMatch extends mongoose.Document {
     team2ReportedT2G1Rounds: number,
     team2ReportedT2G2Rounds: number,
     team2ReportedT2G3Rounds: number
+}
+export interface IMatchPlayer extends mongoose.Document {
+    discordId: string,
+    matchMessageId: string,
+    team: number
 }
 
 export interface ILeaderboard extends mongoose.Document {

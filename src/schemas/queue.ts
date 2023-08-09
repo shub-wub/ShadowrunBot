@@ -4,7 +4,8 @@ import { IQueue } from "../types";
 const queueSchema = new Schema<IQueue>({
     messageId: String,
     rankMin: Number,
-    rankMax: Number
+    rankMax: Number,
+    hidePlayerNames: Boolean
 });
 
 export default model("Queue", queueSchema, "queues");

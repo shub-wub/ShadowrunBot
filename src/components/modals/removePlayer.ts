@@ -1,17 +1,16 @@
 import { Modal } from "../../types";
 import { ButtonInteraction, Client } from 'discord.js';
-import { processQueue } from "#operations";
+import { processQueue, removeUserFromQueue } from "#operations";
 
 const modal : Modal = {
     data: {
-        name: 'player'
+        name: 'removePlayer'
     },
     execute: (interaction, client: Client) => {
-        var player = interaction.fields.getTextInputValue("playerInput");
-        var playerByUsername = interaction.guild?.members.cache.find(gm => gm.user.username == player);
+        var playerId = interaction.fields.getTextInputValue("playerInput");
         const currentTime = new Date(Date.now()).toLocaleString();
         console.log(currentTime + " " + interaction.user.username + " submitted player");
-        processQueue(interaction as unknown as ButtonInteraction, client, playerByUsername?.user.id as string);
+        removeUserFromQueue(interaction as unknown as ButtonInteraction, playerId);
     },
     //cooldown: 10
 }

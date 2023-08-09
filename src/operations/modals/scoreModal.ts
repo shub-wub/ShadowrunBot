@@ -1,14 +1,15 @@
 import { ActionRowBuilder, ButtonInteraction, CacheType, Client, Embed, EmbedBuilder, Guild, GuildMember, ModalBuilder, ModalSubmitInteraction, TextChannel, TextInputBuilder, TextInputStyle, Permissions, PermissionFlagsBits, PermissionsBitField } from "discord.js";
 import { getThemeColor, mongoError } from "#utilities";
-import { Field, IGuild, IMap, IMatch, IPlayer, IQueuePlayer } from "../../types";
+import { Field, IGuild, IMap, IMatch, IMatchPlayer, IPlayer, IQueue, IQueuePlayer } from "../../types";
 import Player from "#schemas/player";
 import GuildRecord from "#schemas/guild";
 import Queue from "#schemas/queue";
 import QueuePlayer from "#schemas/queuePlayer";
 import Match from "#schemas/match";
+import MatchPlayer from "#schemas/matchPlayer";
 import Map from "#schemas/map";
 import { MongooseError } from "mongoose";
-import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji, rebuildQueue, updateQueueEmbed } from "#operations";
+import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji, getRankRole, rebuildQueue, updateQueueEmbed, updateQueuePositions } from "#operations";
 import { truncateSync } from "fs";
 
 export const openScoreModal = (interaction: ButtonInteraction<CacheType>, team: number, game: number): void => {
@@ -192,13 +193,22 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 				match.matchWinner = "Team 2"
 		   }
 		match.save();
+		saveMatchPlayers(match, team1Players, team2Players);
 		if(match.matchWinner == "Team 1") {
 			addWinnersBackToQueue(interaction, client, team1Players, guild, match);
 		} else {
 			addWinnersBackToQueue(interaction, client, team2Players, guild, match);
 		}
-		updateNames(interaction, client, team1Players.concat(team2Players), guild);
+		var players = team1Players.concat(team2Players);
+		updateNames(interaction, client, players, guild);
+		updateRoles(interaction, client, players, guild);
 		updateMatchEmbed(interaction, team1Players, team2Players, guild, match, playersWithPreviousRating);
+		try {
+			await QueuePlayer.deleteMany({matchMessageId: match.messageId});
+		} catch(error) {
+			mongoError(error as MongooseError);
+			console.log(`There was an error removing the players from the queueplayers in the database.`);
+		}
 	} else {
 		match.team1ReportedT1G1Rounds = 0;
 		match.team1ReportedT1G2Rounds = 0;
@@ -224,16 +234,16 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 	}
 };
 
-export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, winningPlayers: IPlayer[], guild: IGuild) => {
+export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, players: IPlayer[], guild: IGuild) => {
 	var guildMemberQueries: Promise<GuildMember>[] = [];
-	for (const wp of winningPlayers) {
+	for (const wp of players) {
 		if(!interaction.guild) return;
 		guildMemberQueries.push(interaction.guild?.members.fetch(wp.discordId));
 	}
 
 	await Promise.all(guildMemberQueries).then(async (queryResults) => {
 		for (const qr of queryResults) {
-			var player = winningPlayers.find(p => p.discordId == qr.user.id);
+			var player = players.find(p => p.discordId == qr.user.id);
 			const isAdmin = qr.permissions.has(PermissionsBitField.Flags.Administrator);
 			if (!player) continue;
 			if (player.discordId != interaction.guild?.ownerId && !isAdmin) {
@@ -262,13 +272,36 @@ export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>
 	});
 }
 
+export const updateRoles = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, players: IPlayer[], guild: IGuild) => {
+	var guildMemberQueries: Promise<GuildMember>[] = [];
+	for (const wp of players) {
+		if(!interaction.guild) return;
+		guildMemberQueries.push(interaction.guild?.members.fetch(wp.discordId));
+	}
+
+	await Promise.all(guildMemberQueries).then(async (queryResults) => {
+		for (const qr of queryResults) {
+			var player = players.find(p => p.discordId == qr.user.id);
+			const isAdmin = qr.permissions.has(PermissionsBitField.Flags.Administrator);
+			if (!player) continue;
+			if (player.discordId != interaction.guild?.ownerId && !isAdmin) {
+				var roleId = getRankRole(player, guild);
+				var role = qr.guild.roles.cache.find(role => role.id === roleId);
+				try {
+					if (role)
+						qr.roles.add(role);
+				} catch(error) {
+					console.log("Could not set role to " + role);
+				}
+			}
+		}
+	});
+}
+
 export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, winningPlayers: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
 	// get the users waiting in the queue when the match ended
 	const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: match.queueId}, { matchMessageId: { $exists: false } }]);
-	const winnersQueueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([
-		{ messageId: match.queueId },
-		{ matchMessageId: match.messageId },
-		{
+	const winnersQueueUsersQuery = Player.find<IPlayer>().and([{
 		  $or: [
 			{ discordId: winningPlayers[0].discordId },
 			{ discordId: winningPlayers[1].discordId },
@@ -281,49 +314,38 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 	var queueEmbedMessage = await (client?.channels?.cache.get(guild.queueChannelId) as TextChannel).messages.fetch(match.queueId);
 	const receivedEmbed = queueEmbedMessage.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
+	const queueQuery = Queue.findOne<IQueue>({ messageId: match.queueId });
 
-    Promise.all([queueUsersQuery, winnersQueueUsersQuery]).then(async (queryResults: [IQueuePlayer[], IQueuePlayer[]]) => {
+    Promise.all([queueUsersQuery, winnersQueueUsersQuery, queueQuery]).then(async (queryResults: [IQueuePlayer[], IPlayer[], IQueue | null]) => {
 		var queuePlayers = queryResults[0];
 		var winningPlayers = queryResults[1];
+		var queue = queryResults[2];
 		var updatedWinningPlayers: IQueuePlayer[] = [];
 		var updatedQueuePlayers: IQueuePlayer[] = [];
-		var isInReadyUpState = false;
-		if (queuePlayers[0] && queuePlayers.length > 0) {
-			for (const qp of queuePlayers) {
-				// Check if the queue is already in a ready up state.
-				if (qp.ready === true) {
-					isInReadyUpState = true;
-					console.log("1isInReadyUpState " + isInReadyUpState)
-					break;
-				}
-			}
-		}
 
 		for (const wp of winningPlayers) {
 			var queueRecord = null;
+			var currentTime = new Date();
 			try {
 				queueRecord = await new QueuePlayer({
 					discordId: wp.discordId,
-					messageId: wp.messageId,
-					ready: false,
+					messageId: match.queueId,
+					queueTime: currentTime
 				}).save();
+				if (queuePlayers.length > 8) {
+					queueRecord.queuePosition = 0; // 0 means they will be added to the front starting at 1
+				}
 			} catch (error) {
 				mongoError(error as MongooseError);
-				console.log(`There was an error adding the player to the queue in the database.`)
+				console.log(`There was an error adding the player to the queue in the database.`);
 				return;
 			}
 			updatedWinningPlayers.push(queueRecord);
 		}
 
-		console.log("2isInReadyUpState " + isInReadyUpState)
-		if(isInReadyUpState) {
-			// add winners to end of queue
-			updatedQueuePlayers = queuePlayers.concat(updatedWinningPlayers);
-		} else {
-			// add players to front of queue
-			updatedQueuePlayers = updatedWinningPlayers.concat(queuePlayers);
-		}
-		rebuildQueue(interaction as unknown as ButtonInteraction<CacheType>, queueEmbed, queueEmbedMessage, updatedQueuePlayers, guild, true)
+		updatedQueuePlayers = updatedWinningPlayers.concat(queuePlayers);
+		await updateQueuePositions(updatedQueuePlayers);
+		rebuildQueue(interaction as unknown as ButtonInteraction<CacheType>, queueEmbed, queueEmbedMessage, updatedQueuePlayers, guild, queue as IQueue, true)
     });
 }
 
@@ -368,3 +390,30 @@ export const updateMatchEmbed = async (interaction: ModalSubmitInteraction<Cache
 		console.log(error);
 	});
 };
+
+
+export const saveMatchPlayers = async (match: IMatch, team1Players: IPlayer[], team2Players: IPlayer[]) => {
+	var matchPlayerRecord = null;
+	var matchplayers = [];
+	try {
+		for (const player of team1Players) {
+			matchplayers.push({
+				discordId: player.discordId,
+				matchMessageId: match.messageId,
+				team: 1,
+			});
+		}
+		for (const player of team2Players) {
+			matchplayers.push({
+				discordId: player.discordId,
+				matchMessageId: match.messageId,
+				team: 2,
+			});
+		}
+		matchPlayerRecord = await MatchPlayer.insertMany(matchplayers);
+	} catch (error) {
+		mongoError(error as MongooseError);
+		console.log(`There was an error adding the player to the matchplayers in the database.`);
+		return;
+	}
+}

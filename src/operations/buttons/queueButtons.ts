@@ -58,13 +58,13 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 return;
             }
 
-            if (queueUser && queueUser?.matchMessageId != null) {
+            /*if (queueUser && queueUser?.matchMessageId != null) {
                 await interaction.reply({
                     content: `You have an unscored match. You must wait until the match is scored until you can queue or ready up again.`,
                     ephemeral: true
                 });
                 return;
-            }
+            }*/
 
             if (!queue) return;
             if (!(player.rating >= queue.rankMin && player.rating <= queue.rankMax)) {

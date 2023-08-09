@@ -11,15 +11,18 @@ import QueuePlayer from "#schemas/queuePlayer";
 const event: BotEvent = {
     name: 'messageDelete',
     async execute(message, client: Client) {
-        console.log("deleted")
+        console.log("1 Message delete from message.id" + message.messageId);
+        if (message.partial) await message.fetch(true);
+        console.log("2 Message delete from message.id" + message.messageId);
         var guildRecord = await Guild.findOne<IGuild>({
             guildId: message.guildId,
         });
         if (message.channelId === guildRecord?.leaderboardChannelId) {
-            const leaderboardQuery = Leaderboard.findOne<ILeaderboard>().and([{ messageId: message.id}]);
+            console.log("Message delete from leaderboard.id" + message.channelId);
+            const leaderboardQuery = Leaderboard.findOne<ILeaderboard>().and([{ messageId: message.id }]);
             try {
                 await Leaderboard.deleteOne(leaderboardQuery);
-            } catch(error) {
+            } catch (error) {
                 mongoError(error as MongooseError);
                 await message.reply({
                     content: `There was an error deleting the leaderboard in the database.`,
@@ -27,13 +30,13 @@ const event: BotEvent = {
                 });
             }
         } else if (message.channelId === guildRecord?.queueChannelId) {
-            console.log("deleted queue")
-            const queueQuery = await Queue.findOne<IQueue>().and([{messageId: message.id}]);
+            console.log("Message delete from queue.id" + message.channelId);
+            const queueQuery = await Queue.findOne<IQueue>().and([{ messageId: message.id }]);
             const queueMessageId = queueQuery?.messageId;
-            const queuePlayersQuery = await QueuePlayer.find<IQueuePlayer>().and([{messageId: queueMessageId, matchMessageId: {$exists: false}}]);
+            const queuePlayersQuery = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: queueMessageId, matchMessageId: { $exists: false } }]);
             try {
-                await Queue.deleteOne().and([{messageId: queueQuery?.messageId}]);
-            } catch(error) {
+                await Queue.deleteOne().and([{ messageId: queueQuery?.messageId }]);
+            } catch (error) {
                 mongoError(error as MongooseError);
                 await message.reply({
                     content: `There was an error deleting the queue from the queues in the database.`,
@@ -44,7 +47,7 @@ const event: BotEvent = {
                 await Promise.all(queuePlayersQuery.map(async (u) => {
                     await QueuePlayer.deleteOne({ _id: u._id });
                 }));
-            } catch(error) {
+            } catch (error) {
                 mongoError(error as MongooseError);
                 await message.reply({
                     content: `There was an error deleting the plaayers from the queueplayers in the database.`,
@@ -52,12 +55,12 @@ const event: BotEvent = {
                 });
             }
         } else if (message.channelId === guildRecord?.matchChannelId) {
-            console.log("deleted match")
-            const matchQuery = await Match.findOne<IMatch>().and([{messageId: message.id, matchWinner: {$exists: false}}]);
+            console.log("Message delete from match.id" + message.channelId);
+            const matchQuery = await Match.findOne<IMatch>().and([{ messageId: message.id, matchWinner: { $exists: false } }]);
             if (!matchQuery) return;
             try {
-                await Match.deleteOne().and([{messageId: matchQuery?.messageId}]);
-            } catch(error) {
+                await Match.deleteOne().and([{ messageId: matchQuery?.messageId }]);
+            } catch (error) {
                 mongoError(error as MongooseError);
                 await message.reply({
                     content: `There was an error deleting the match from the matches in the database.`,
@@ -66,11 +69,11 @@ const event: BotEvent = {
                 return;
             }
             try {
-                const queuePlayersQuery = await QueuePlayer.find<IQueuePlayer>().and([{matchMessageId: matchQuery?.messageId}]);
+                const queuePlayersQuery = await QueuePlayer.find<IQueuePlayer>().and([{ matchMessageId: matchQuery?.messageId }]);
                 await Promise.all(queuePlayersQuery.map(async (u) => {
                     await QueuePlayer.deleteOne({ _id: u._id });
                 }));
-            } catch(error) {
+            } catch (error) {
                 mongoError(error as MongooseError);
                 await message.reply({
                     content: `There was an error deleting the players from the queueplayers in the database.`,

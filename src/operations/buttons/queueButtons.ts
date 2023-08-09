@@ -16,7 +16,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
-    const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId, messageId: interaction.message.id }]);
+    const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
     //const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
     // TODO check if they are already in a match for this queue. 
     // I think we will have to set a bool on the Iqueueplayer record for if the match is finished to check here
@@ -51,15 +51,15 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 return;
             }
 
-            if (queueUser != null && queueUser.messageId == interaction.message.id) {
-                await interaction.reply({
-                    content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
-                    ephemeral: true
-                });
-                return;
-            }
+            // if (queueUser != null && queueUser.messageId == interaction.message.id) {
+            //     await interaction.reply({
+            //         content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
+            //         ephemeral: true
+            //     });
+            //     return;
+            // }
 
-            /*if (queueUser != null && queueUser.matchMessageId == null) {
+            if (queueUser != null && queueUser.matchMessageId == null) {
                 await interaction.reply({
                     content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
                     ephemeral: true
@@ -73,7 +73,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     ephemeral: true
                 });
                 return;
-            }*/
+            }
 
             if (!queue) return;
             if (!(player.rating >= queue.rankMin && player.rating <= queue.rankMax)) {
@@ -114,7 +114,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        // await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
             }
@@ -460,7 +460,7 @@ export const updateQueuePositions = async (updatedQueuePlayers: IQueuePlayer[]):
     for (const player of updatedQueuePlayers) {
         if (player.queuePosition === 0) {
             playersWith0Position.push(player); // add players with 0 first (they are winners)
-        } else if (player.queuePosition !== null) { 
+        } else if (player.queuePosition !== null) {
             playersWithPosition.push(player); // if the player has a position already add them next
         } else {
             playersWithoutPosition.push(player); // if the player does not have a position add them last
@@ -480,7 +480,7 @@ export const updateQueuePositions = async (updatedQueuePlayers: IQueuePlayer[]):
         player.queuePosition = newPosition;
         newPosition++;
     }
-    
+
     await Promise.all(allPlayers.map(qp => {
         return qp.save();
     }));

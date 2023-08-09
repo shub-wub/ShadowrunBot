@@ -1,4 +1,4 @@
-import { createMatch, launchMatch, processQueue } from '#operations';
+import { createMatch, isGmOrBetter, launchMatch, processQueue } from '#operations';
 import { Button } from '../../types';
 
 const button: Button = {
@@ -8,7 +8,16 @@ const button: Button = {
     execute: async (interaction, client) => {
         const currentTime = new Date(Date.now()).toLocaleString();
         console.log(currentTime + " " + interaction.user.username + " pushed launchMatch");
-        launchMatch(interaction, client);
+        var canLaunch = await isGmOrBetter(interaction);
+        if (!canLaunch) {
+            await interaction.reply({
+                content: `Contact a GM or staff member to launch the match`,
+                ephemeral: true
+            });
+            return;
+        } else {
+            launchMatch(interaction, client);
+        }
     },
     cooldown: 10
 }

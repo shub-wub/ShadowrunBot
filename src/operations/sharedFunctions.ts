@@ -1,4 +1,6 @@
+import { ButtonInteraction, GuildMember, PermissionsBitField } from "discord.js";
 import { IGuild, IPlayer, IQueuePlayer } from "../types";
+import QueuePlayer from "#schemas/queuePlayer";
 
 export const getRankEmoji = (player: IPlayer, guild: IGuild): String => {
     var emoji = "";
@@ -14,6 +16,22 @@ export const getRankEmoji = (player: IPlayer, guild: IGuild): String => {
         emoji = `<:diamond:${guild.diamondEmojiId}>`;
     }
     return emoji;
+}
+
+export const getRankRole = (player: IPlayer, guild: IGuild): String => {
+    var role = "";
+    if(player.rating <= guild.bronzeMax) {
+        role = guild.bronzeRoleId;
+    } else if (player.rating <= guild.silverMax) {
+        role = guild.silverRoleId;
+    } else if (player.rating <= guild.goldMax) {
+        role = guild.goldRoleId;
+    } else if (player.rating <= guild.platinumMax) {
+        role = guild.platinumRoleId;
+    } else if (player.rating <= guild.diamondMax) {
+        role = guild.diamondRoleId;
+    }
+    return role;
 }
 
 export const generateTeams = (playersInput: IPlayer[]): [IPlayer[], IPlayer[]] => { 
@@ -77,4 +95,35 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
         player.rating = player.rating + k * (0 - expectedScore);
         player.rating = Math.round(player.rating);
     });
+}
+
+export const getQueuePlayers = async (interaction: ButtonInteraction): Promise<IQueuePlayer[]> => {
+    return await QueuePlayer.find<IQueuePlayer>().and([
+        { messageId: interaction.message.id }, 
+        { matchMessageId: { $exists: false } }
+    ]);
+}
+
+export const getQueuePlayersAsText = async (interaction: ButtonInteraction, queuePlayers: IQueuePlayer[]): Promise<string> => {
+    var text = "";
+    var guildMemberQueries: Promise<GuildMember>[] = [];
+    for (const wp of queuePlayers) {
+        if (interaction.guild) {
+            guildMemberQueries.push(interaction.guild?.members.fetch(wp.discordId));
+        }
+    }
+
+    const queryResults = await Promise.all(guildMemberQueries);
+    for (const qr of queryResults) {
+        text += qr.nickname + " " + qr.user.id + "\n";
+    }
+    
+    return text;
+}
+
+export const isGmOrBetter = async (interaction: ButtonInteraction): Promise<boolean> => {
+    var guildUser = await interaction.guild?.members.fetch(interaction.user.id);
+
+    return guildUser?.roles.cache.some(r => r.name.toLocaleLowerCase() === 'gm' || r.name.toLocaleLowerCase() === 'moderator' || r.name.toLocaleLowerCase() === 'admin') as boolean;
+    //const isAdmin = guildUser?.permissions.has(PermissionsBitField.Flags.Administrator);
 }

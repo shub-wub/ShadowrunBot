@@ -11,6 +11,7 @@ import QueuePlayer from "#schemas/queuePlayer";
 const event: BotEvent = {
     name: 'messageDelete',
     async execute(message, client: Client) {
+        console.log("deleted")
         var guildRecord = await Guild.findOne<IGuild>({
             guildId: message.guildId,
         });
@@ -26,6 +27,7 @@ const event: BotEvent = {
                 });
             }
         } else if (message.channelId === guildRecord?.queueChannelId) {
+            console.log("deleted queue")
             const queueQuery = await Queue.findOne<IQueue>().and([{messageId: message.id}]);
             const queueMessageId = queueQuery?.messageId;
             const queuePlayersQuery = await QueuePlayer.find<IQueuePlayer>().and([{messageId: queueMessageId, matchMessageId: {$exists: false}}]);
@@ -50,6 +52,7 @@ const event: BotEvent = {
                 });
             }
         } else if (message.channelId === guildRecord?.matchChannelId) {
+            console.log("deleted match")
             const matchQuery = await Match.findOne<IMatch>().and([{messageId: message.id, matchWinner: {$exists: false}}]);
             if (!matchQuery) return;
             try {

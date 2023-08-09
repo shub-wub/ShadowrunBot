@@ -1,5 +1,5 @@
 import { getThemeColor, mongoError } from "#utilities";
-import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, } from "discord.js";
+import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, GuildMember, PermissionsBitField, } from "discord.js";
 import QueuePlayer from "#schemas/queuePlayer";
 import Player from "#schemas/player";
 import Guild from "#schemas/guild";
@@ -24,7 +24,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
 
-    Promise.all([playerQuery, queueUserQuery, queueAllPlayers, guildQuery, queueQuery])
+    await Promise.all([playerQuery, queueUserQuery, queueAllPlayers, guildQuery, queueQuery])
         .then(async (queryResults: [IPlayer | null, IQueuePlayer | null, IQueuePlayer[], IGuild | null, IQueue | null]) => {
 
             var player = queryResults[0];
@@ -83,11 +83,13 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
             }
 
             var queueRecord = null;
+            var currentTime = new Date();
             try {
                 queueRecord = await new QueuePlayer({
                     discordId: userId,
                     messageId: interaction.message.id,
-                    queuePosition: queuePlayers.length + 1
+                    queuePosition: queuePlayers.length + 1,
+                    queueTime: currentTime
                 }).save();
             } catch (error) {
                 mongoError(error as MongooseError);
@@ -101,7 +103,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        //await user.send(`Hello, your match is ready! Please join the players in the ranked voice channel within 5 minutes.`).catch((e: any) => { });
+                        await user.send(`Hello, your match is ready! Please join the players in the ranked voice channel within 5 minutes.`).catch((e: any) => { });
                     }
                 }
             }
@@ -116,10 +118,6 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
 export const launchMatch = async (interaction: ButtonInteraction, client: Client) => {
     const receivedEmbed = interaction.message.embeds[0];
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
-    const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([
-        { messageId: interaction.message.id }, 
-        { matchMessageId: { $exists: false } }
-    ]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
     var queuePlayersTop8Query = QueuePlayer.find<IQueuePlayer>().and([
@@ -128,20 +126,23 @@ export const launchMatch = async (interaction: ButtonInteraction, client: Client
         { queuePosition: { $lte: 8 } }
     ]);
 
-    Promise.all([queueAllPlayers, queuePlayersTop8Query, guildQuery, queueQuery])
-        .then(async (queryResults: [IQueuePlayer[], IQueuePlayer[], IGuild | null, IQueue | null]) => {
-
-            var queuePlayers = queryResults[0];
-            var queuePlayersTop8 = queryResults[1];
-            var guild = queryResults[2];
-            var queue = queryResults[3];
+    await Promise.all([queuePlayersTop8Query, guildQuery, queueQuery])
+        .then(async (queryResults: [IQueuePlayer[], IGuild | null, IQueue | null]) => {
+            var queuePlayersTop8 = queryResults[0];
+            var guild = queryResults[1];
+            var queue = queryResults[2];
 
             if (!guild) return;
 
             if (queuePlayersTop8.length == 8) {
-                createMatch(interaction, client, queuePlayersTop8);
-                //removeMatchPlayersFromQueue();
-                rebuildQueue(interaction, queueEmbed, interaction.message, queuePlayers, guild, queue as IQueue, false);
+                await createMatch(interaction, client, queuePlayersTop8);
+
+                // get the queuePlayers again where matchMessageId is null so we remove the match players from the queue.
+                console.log("getting updated queue players");
+                var updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
+                await updateQueuePositions(updatedQueuePlayers);
+
+                rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, guild, queue as IQueue, false);
             } else {
                 await interaction.reply({
                     content: `There are not yet 8 players in the queue for you to launch the match.`,
@@ -163,7 +164,7 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, overri
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
 
-    Promise.all([queueUserQuery, guildQuery, queueQuery])
+    await Promise.all([queueUserQuery, guildQuery, queueQuery])
         .then(async (queryResults: [IQueuePlayer[], IGuild | null, IQueue | null]) => {
             var queue = queryResults[2];
             if (!queryResults[1]) return;
@@ -264,8 +265,7 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
     const playersQuery = Player.find({ discordId: { $in: queuePlayers.map(qp => qp.discordId) } });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const mapQuery = Map.find<IMap>();
-
-    Promise.all([playersQuery, guildQuery, mapQuery]).then(async (queryResults: [IPlayer[], IGuild | null, IMap[]]) => {
+    await Promise.all([playersQuery, guildQuery, mapQuery]).then(async (queryResults: [IPlayer[], IGuild | null, IMap[]]) => {
         if (queryResults[0].length !== queuePlayers.length) {
             console.log("Not all players were found.")
             return;
@@ -286,11 +286,9 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
             if (!indices.has(index))
                 indices.add(index);
         }
-
         // Add the randomly selected maps to the 'maps' array
         for (const index of indices)
             maps.push(queryResults[2][index]);
-
 
         var teams = generateTeams(queryResults[0]);
         const initialEmbed = createMatchEmbed(teams[1], teams[0], queryResults[1], maps);
@@ -300,13 +298,14 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
         var channel = await client.channels.fetch(
             queryResults[1].matchChannelId
         );
+
         var message = await (channel as TextChannel).send({
             embeds: [initialEmbed],
             components: [buttonRow1, buttonRow2],
         });
 
         try {
-            await new Match({
+            new Match({
                 messageId: message.id,
                 queueId: interaction.message.id,
                 map1: maps[0].name,
@@ -325,14 +324,16 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
                 team2ReportedT2G2Rounds: 0,
                 team2ReportedT2G3Rounds: 0
             }).save();
-            await Promise.all(queuePlayers.map(qp => {
+
+            await Promise.all(queuePlayers.map(async qp => {
                 qp.matchMessageId = message.id;
-                var team1Player = teams[1].find(p => p.discordId == qp.discordId);
-                if (team1Player)
-                    qp.team = 1;
-                else
-                    qp.team = 2;
-                return qp.save();
+                const team1Player = teams[1].find(p => p.discordId == qp.discordId);
+                qp.team = team1Player ? 1 : 2;
+                try {
+                    return qp.save();
+                } catch (error) {
+                    console.error("Error saving queue player:", error);
+                }
             }));
         } catch (error) {
             mongoError(error as MongooseError);
@@ -401,7 +402,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
         ]);
     await queueEmbedMessage.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1, activeButtonRow2] 
+        components: [activeButtonRow1/*, activeButtonRow2*/] 
     });
     if (!deferred) {
         deferred = true;
@@ -415,25 +416,58 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
     var queueCount = Number(updatedQueuePlayers.length);
     var isInLaunchState = false;
     var hidePlayerNames = queue.hidePlayerNames;
-
+    
     if (queueCount >= 8) {
         isInLaunchState = true;
     }
 
     var queuePlayers = '';
-    for (let i = 0; i < updatedQueuePlayers.length; i++) {
-        if (updatedQueuePlayers[i].matchMessageId) continue;
-        var player = await Player.findOne<IPlayer>({ discordId: updatedQueuePlayers[i].discordId });
-        if (!player) return;
-        var emoji = getRankEmoji(player, guild);
-
-        if (hidePlayerNames) {
-            queuePlayers += `<Player ${i + 1} ${emoji}\n`;
+    if(queueCount > 0) {
+        for (let i = 0; i < updatedQueuePlayers.length; i++) {
+            if (updatedQueuePlayers[i].matchMessageId) continue;
+            var player = await Player.findOne<IPlayer>({ discordId: updatedQueuePlayers[i].discordId });
+            if (!player) return;
+            var emoji = getRankEmoji(player, guild);
+            const unixTimestamp = Math.floor(updatedQueuePlayers[i].queueTime.getTime() / 1000);
+            if (hidePlayerNames) {
+                queuePlayers += `Player ${i + 1} ${emoji} in queue since <t:${unixTimestamp}:R>\n`;
+            }
+            else {
+                queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating} in queue since <t:${unixTimestamp}:R>\n`;
+            }
         }
-        else {
-            queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating}\n`;
+    }
+    updateQueueEmbed(interaction, queueEmbed, queueEmbedMessage, queuePlayers, queueCount, isInLaunchState, deferred);
+}
+
+export const updateQueuePositions = async (updatedQueuePlayers: IQueuePlayer[]): Promise<void> => {
+    // Separate players with non-null queuePosition from players with null queuePosition
+    const playersWithPosition: IQueuePlayer[] = [];
+    const playersWithoutPosition: IQueuePlayer[] = [];
+
+    for (const player of updatedQueuePlayers) {
+        if (player.queuePosition === 0) {
+            playersWithoutPosition.push(player);
+        } else if (player.queuePosition !== null) {
+            playersWithPosition.push(player);
+        } else {
+            playersWithoutPosition.push(player);
         }
     }
 
-    updateQueueEmbed(interaction, queueEmbed, queueEmbedMessage, queuePlayers, queueCount, isInLaunchState, deferred);
-}
+    // Sort players with queuePosition and update their queuePosition values
+    playersWithPosition.sort((a, b) => a.queuePosition - b.queuePosition);
+    let newPosition = 1;
+
+    for (const player of playersWithPosition) {
+        player.queuePosition = newPosition;
+        newPosition++;
+    }
+
+    // Combine the updated players
+    const updatedQueuePositions: IQueuePlayer[] = [...playersWithPosition, ...playersWithoutPosition];
+    
+    await Promise.all(updatedQueuePositions.map(qp => {
+        return qp.save();
+    }));
+};

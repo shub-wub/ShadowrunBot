@@ -9,7 +9,7 @@ import Match from "#schemas/match";
 import MatchPlayer from "#schemas/matchPlayer";
 import Map from "#schemas/map";
 import { MongooseError } from "mongoose";
-import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji, rebuildQueue, updateQueueEmbed } from "#operations";
+import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji, getRankRole, rebuildQueue, updateQueueEmbed, updateQueuePositions } from "#operations";
 import { truncateSync } from "fs";
 
 export const openScoreModal = (interaction: ButtonInteraction<CacheType>, team: number, game: number): void => {
@@ -199,7 +199,9 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 		} else {
 			addWinnersBackToQueue(interaction, client, team2Players, guild, match);
 		}
-		updateNames(interaction, client, team1Players.concat(team2Players), guild);
+		var players = team1Players.concat(team2Players);
+		updateNames(interaction, client, players, guild);
+		updateRoles(interaction, client, players, guild);
 		updateMatchEmbed(interaction, team1Players, team2Players, guild, match, playersWithPreviousRating);
 		try {
 			await QueuePlayer.deleteMany({matchMessageId: match.messageId});
@@ -232,16 +234,16 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 	}
 };
 
-export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, winningPlayers: IPlayer[], guild: IGuild) => {
+export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, players: IPlayer[], guild: IGuild) => {
 	var guildMemberQueries: Promise<GuildMember>[] = [];
-	for (const wp of winningPlayers) {
+	for (const wp of players) {
 		if(!interaction.guild) return;
 		guildMemberQueries.push(interaction.guild?.members.fetch(wp.discordId));
 	}
 
 	await Promise.all(guildMemberQueries).then(async (queryResults) => {
 		for (const qr of queryResults) {
-			var player = winningPlayers.find(p => p.discordId == qr.user.id);
+			var player = players.find(p => p.discordId == qr.user.id);
 			const isAdmin = qr.permissions.has(PermissionsBitField.Flags.Administrator);
 			if (!player) continue;
 			if (player.discordId != interaction.guild?.ownerId && !isAdmin) {
@@ -264,6 +266,32 @@ export const updateNames = async (interaction: ModalSubmitInteraction<CacheType>
 					qr.setNickname(nickname);
 				} catch(error) {
 					console.log("Could not set nickname to " + nickname);
+				}
+			}
+		}
+	});
+}
+
+export const updateRoles = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, players: IPlayer[], guild: IGuild) => {
+	var guildMemberQueries: Promise<GuildMember>[] = [];
+	for (const wp of players) {
+		if(!interaction.guild) return;
+		guildMemberQueries.push(interaction.guild?.members.fetch(wp.discordId));
+	}
+
+	await Promise.all(guildMemberQueries).then(async (queryResults) => {
+		for (const qr of queryResults) {
+			var player = players.find(p => p.discordId == qr.user.id);
+			const isAdmin = qr.permissions.has(PermissionsBitField.Flags.Administrator);
+			if (!player) continue;
+			if (player.discordId != interaction.guild?.ownerId && !isAdmin) {
+				var roleId = getRankRole(player, guild);
+				var role = qr.guild.roles.cache.find(role => role.id === roleId);
+				try {
+					if (role)
+						qr.roles.add(role);
+				} catch(error) {
+					console.log("Could not set role to " + role);
 				}
 			}
 		}
@@ -297,11 +325,16 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 
 		for (const wp of winningPlayers) {
 			var queueRecord = null;
+			var currentTime = new Date();
 			try {
 				queueRecord = await new QueuePlayer({
 					discordId: wp.discordId,
 					messageId: match.queueId,
+					queueTime: currentTime
 				}).save();
+				if (queuePlayers.length > 8) {
+					queueRecord.queuePosition = 0; // 0 means they will be added to the front starting at 1
+				}
 			} catch (error) {
 				mongoError(error as MongooseError);
 				console.log(`There was an error adding the player to the queue in the database.`);
@@ -310,13 +343,8 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 			updatedWinningPlayers.push(queueRecord);
 		}
 
-		if(queuePlayers.length > 8) {
-			// add winners to end of queue
-			updatedQueuePlayers = queuePlayers.concat(updatedWinningPlayers);
-		} else {
-			// add players to front of queue
-			updatedQueuePlayers = updatedWinningPlayers.concat(queuePlayers);
-		}
+		updatedQueuePlayers = updatedWinningPlayers.concat(queuePlayers);
+		await updateQueuePositions(updatedQueuePlayers);
 		rebuildQueue(interaction as unknown as ButtonInteraction<CacheType>, queueEmbed, queueEmbedMessage, updatedQueuePlayers, guild, queue as IQueue, true)
     });
 }

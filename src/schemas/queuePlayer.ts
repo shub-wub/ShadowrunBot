@@ -6,6 +6,7 @@ const queuePlayerSchema = new Schema<IQueuePlayer>({
     messageId: String,
     matchMessageId: String,
     queuePosition: Number,
+    queueTime: Date,
     team: Number,
     ready: Boolean
 });

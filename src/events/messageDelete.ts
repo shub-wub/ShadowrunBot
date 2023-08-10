@@ -11,9 +11,7 @@ import QueuePlayer from "#schemas/queuePlayer";
 const event: BotEvent = {
     name: 'messageDelete',
     async execute(message, client: Client) {
-        console.log("1 Message delete from message.id" + message.messageId);
         if (message.partial) await message.fetch(true);
-        console.log("2 Message delete from message.id" + message.messageId);
         var guildRecord = await Guild.findOne<IGuild>({
             guildId: message.guildId,
         });

@@ -45,4 +45,3 @@ if __name__ == "__main__":
     if type(args.playerDiscordId) != type(str):
         args.playerDiscordId = str(args.playerDiscordId)
     changeEloScore(args.playerDiscordId, args.newEloScore)
-

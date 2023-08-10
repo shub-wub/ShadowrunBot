@@ -114,7 +114,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        // await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
             }
@@ -203,7 +203,7 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, overri
         });
 }
 
-export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[], guildRecord: IGuild, maps: IMap[]): any => {
+export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[], guildRecord: IGuild, mapsG1: IMap[], mapsG2: IMap[], mapsG3: IMap[]): any => {
     var team1 = "";
     var team2 = "";
     var team1Total = 0;
@@ -219,7 +219,10 @@ export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[
         team2Total += team2Players[i].rating;
         team2 += `<@${team2Players[i].discordId}> ${emoji}${team2Players[i].rating}\n`;
     }
-    fields.push({ name: `Maps`, value: `${maps[0].name}\n${maps[1].name}\n${maps[2].name}`, inline: false });
+    fields.push({ name: `Maps`, value: `${mapsG1[0].name}\n${mapsG2[1].name}\n${mapsG3[2].name}`, inline: false });
+    console.log("G1" + mapsG1);
+    console.log("G2" + mapsG2);
+    console.log("G3" + mapsG3);
     fields.push({ name: `Team 1(${team1Total})`, value: team1, inline: true });
     fields.push({ name: `Team 2(${team2Total})`, value: team2, inline: true });
     var randomTeam = Math.floor(Math.random() * 2) + 1;
@@ -274,13 +277,21 @@ export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): Ac
 export const createMatch = async (interaction: ButtonInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[]): Promise<void> => {
     const playersQuery = Player.find({ discordId: { $in: queuePlayers.map(qp => qp.discordId) } });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
-    const mapQuery = Map.find<IMap>();
-    await Promise.all([playersQuery, guildQuery, mapQuery]).then(async (queryResults: [IPlayer[], IGuild | null, IMap[]]) => {
-        if (queryResults[0].length !== queuePlayers.length) {
+    const mapQueryG1 = Map.find<IMap>({ gameType: "Attrition" });
+    const mapQueryG2 = Map.find<IMap>({ gameType: "Extraction" });
+    const mapQueryG3 = Map.find<IMap>();
+    await Promise.all([playersQuery, guildQuery, mapQueryG1, mapQueryG2, mapQueryG3]).then(async (queryResults: [IPlayer[], IGuild | null, IMap[], IMap[], IMap[]]) => {
+        const players = queryResults[0];
+        const guild = queryResults[1];
+        const attritionMaps = queryResults[2];
+        const extractionMaps = queryResults[3];
+        const allMaps = queryResults[4];
+
+        if (players.length !== queuePlayers.length) {
             console.log("Not all players were found.")
             return;
         }
-        if (!queryResults[1]) {
+        if (!guild) {
             await interaction.reply({
                 content: `There was no guild record found. Try using /srinitialize first.`,
                 ephemeral: true,
@@ -289,24 +300,35 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
         }
 
         // Generate 3 random indices without repetition
-        var maps: IMap[] = [];
+        var mapsG1: IMap[] = [];
+        var mapsG2: IMap[] = [];
+        var mapsG3: IMap[] = [];
         const indices = new Set<number>();
         while (indices.size < 3) {
-            const index = Math.floor(Math.random() * queryResults[2].length);
+            const index = Math.floor(Math.random() * allMaps.length);
             if (!indices.has(index))
                 indices.add(index);
         }
         // Add the randomly selected maps to the 'maps' array
-        for (const index of indices)
-            maps.push(queryResults[2][index]);
+        for (const index of indices) {
+            mapsG1.push(attritionMaps[index]);
+        }
 
-        var teams = generateTeams(queryResults[0]);
-        const initialEmbed = createMatchEmbed(teams[1], teams[0], queryResults[1], maps);
+        for (const index of indices) {
+            mapsG2.push(extractionMaps[index]);
+        }
+
+        for (const index of indices) {
+            mapsG3.push(allMaps[index]);
+        }
+
+        var teams = generateTeams(players);
+        const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, mapsG1, mapsG2, mapsG3);
         const buttonRow1 = createMatchButtonRow1(false, true, true);
         const buttonRow2 = createMatchButtonRow2(false, true, true);
 
         var channel = await client.channels.fetch(
-            queryResults[1].matchChannelId
+            guild.matchChannelId
         );
 
         var message = await (channel as TextChannel).send({
@@ -318,9 +340,9 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
             new Match({
                 messageId: message.id,
                 queueId: interaction.message.id,
-                map1: maps[0].name,
-                map2: maps[1].name,
-                map3: maps[2].name,
+                map1: mapsG1[0].name,
+                map2: mapsG2[1].name,
+                map3: mapsG3[2].name,
                 team1ReportedT1G1Rounds: 0,
                 team1ReportedT1G2Rounds: 0,
                 team1ReportedT1G3Rounds: 0,
@@ -460,7 +482,7 @@ export const updateQueuePositions = async (updatedQueuePlayers: IQueuePlayer[]):
     for (const player of updatedQueuePlayers) {
         if (player.queuePosition === 0) {
             playersWith0Position.push(player); // add players with 0 first (they are winners)
-        } else if (player.queuePosition !== null) { 
+        } else if (player.queuePosition !== null) {
             playersWithPosition.push(player); // if the player has a position already add them next
         } else {
             playersWithoutPosition.push(player); // if the player does not have a position add them last
@@ -480,7 +502,7 @@ export const updateQueuePositions = async (updatedQueuePlayers: IQueuePlayer[]):
         player.queuePosition = newPosition;
         newPosition++;
     }
-    
+
     await Promise.all(allPlayers.map(qp => {
         return qp.save();
     }));

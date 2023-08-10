@@ -98,17 +98,17 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		parent: cat.id,
 	});
 
-	const lobbyCreate = new Map({ name: "Lobby Small (Attrition)" }).save();
-	const lobbyExtractionCreate = new Map({ name: "Lobby (Extraction)" }).save();
-	const lobbyAttritionCreate = new Map({ name: "Lobby (Attrition)" }).save();
-	const nerveCenterCreate = new Map({ name: "Nerve Center Small (Attrition)" }).save();
-	const nerveCenterExtractionCreate = new Map({ name: "Nerve Center (Extraction)" }).save();
-	const nerveCenterAttritionCreate = new Map({ name: "Nerve Center (Attrition)" }).save();
-	const pinnacleCreate = new Map({ name: "Pinnacle (Attrition)" }).save();
-	const pinnacleExtractionCreate = new Map({ name: "Pinnacle (Extraction)" }).save();
-	const powerStationCreate = new Map({ name: "Power Station (Attrition)" }).save();
-	const pocoCreate = new Map({ name: "Poco Small (Attrition)" }).save();
-	const pocoAttritionCreate = new Map({ name: "Poco (Attrition)" }).save();
+	const lobbyCreate = new Map({ name: "Lobby Small (Attrition)", gameType: "Attrition" }).save();
+	const lobbyExtractionCreate = new Map({ name: "Lobby (Extraction)", gameType: "Extraction" }).save();
+	const lobbyAttritionCreate = new Map({ name: "Lobby (Attrition)", gameType: "Attrition" }).save();
+	const nerveCenterCreate = new Map({ name: "Nerve Center Small (Attrition)", gameType: "Attrition" }).save();
+	const nerveCenterExtractionCreate = new Map({ name: "Nerve Center (Extraction)", gameType: "Extraction" }).save();
+	const nerveCenterAttritionCreate = new Map({ name: "Nerve Center (Attrition)", gameType: "Attrition" }).save();
+	const pinnacleCreate = new Map({ name: "Pinnacle (Attrition)", gameType: "AttritionG3" }).save();
+	const pinnacleExtractionCreate = new Map({ name: "Pinnacle (Extraction)", gameType: "Extraction" }).save();
+	const powerStationCreate = new Map({ name: "Power Station (Attrition)", gameType: "Attrition" }).save();
+	const pocoCreate = new Map({ name: "Poco Small (Attrition)", gameType: "Attrition" }).save();
+	const pocoAttritionCreate = new Map({ name: "Poco (Attrition)", gameType: "Attrition" }).save();
 
 	Promise.all([
 		queueChannelCreate as Promise<TextChannel>,

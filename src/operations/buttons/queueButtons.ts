@@ -17,9 +17,6 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
     const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
-    // TODO check if they are already in a match for this queue. 
-    // I think we will have to set a bool on the Iqueueplayer record for if the match is finished to check here
-    //const inAMatchQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
     const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
@@ -74,7 +71,8 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 });
                 return;
             }
-            if (!queueUser) {queuePlayers
+            if (!queueUser) {
+                queuePlayers
                 queueUser = new QueuePlayer({
                     discordId: userId,
                     messageId: interaction.message.id,
@@ -85,12 +83,12 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
             var queueRecord = null;
             var currentTime = new Date();
             try {
-                queueRecord = await new QueuePlayer({
+                queueRecord = new QueuePlayer({
                     discordId: userId,
                     messageId: interaction.message.id,
                     queuePosition: null,
                     queueTime: currentTime
-                }).save();
+                })/*.save();*/
             } catch (error) {
                 mongoError(error as MongooseError);
                 console.log(`There was an error adding the player to the queue in the database.`)
@@ -104,7 +102,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        await user.send(`Hello, your match is ready! Please join the players in the ranked voice channel within 5 minutes.`).catch((e: any) => { });
+                        // await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
             }
@@ -122,7 +120,7 @@ export const launchMatch = async (interaction: ButtonInteraction, client: Client
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
     var queuePlayersTop8Query = QueuePlayer.find<IQueuePlayer>().and([
-        { messageId: interaction.message.id }, 
+        { messageId: interaction.message.id },
         { matchMessageId: { $exists: false } },
         { queuePosition: { $lte: 8 } }
     ]);
@@ -402,7 +400,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
         ]);
     await queueEmbedMessage.edit({
         embeds: [queueEmbed],
-        components: [activeButtonRow1/*, activeButtonRow2*/] 
+        components: [activeButtonRow1/*, activeButtonRow2*/]
     });
     if (!deferred) {
         deferred = true;
@@ -416,13 +414,13 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
     var queueCount = Number(updatedQueuePlayers.length);
     var isInLaunchState = false;
     var hidePlayerNames = queue.hidePlayerNames;
-    
+
     if (queueCount >= 8) {
         isInLaunchState = true;
     }
 
     var queuePlayers = '';
-    if(queueCount > 0) {
+    if (queueCount > 0) {
         for (let i = 0; i < updatedQueuePlayers.length; i++) {
             if (updatedQueuePlayers[i].matchMessageId) continue;
             var player = await Player.findOne<IPlayer>({ discordId: updatedQueuePlayers[i].discordId });
@@ -442,32 +440,36 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
 
 export const updateQueuePositions = async (updatedQueuePlayers: IQueuePlayer[]): Promise<void> => {
     // Separate players with non-null queuePosition from players with null queuePosition
-    const playersWithPosition: IQueuePlayer[] = [];
+    let playersWithPosition: IQueuePlayer[] = [];
+    const playersWith0Position: IQueuePlayer[] = [];
     const playersWithoutPosition: IQueuePlayer[] = [];
+    let allPlayers: IQueuePlayer[] = [];
 
     for (const player of updatedQueuePlayers) {
         if (player.queuePosition === 0) {
-            playersWithoutPosition.push(player);
+            playersWith0Position.push(player); // add players with 0 first (they are winners)
         } else if (player.queuePosition !== null) {
-            playersWithPosition.push(player);
+            playersWithPosition.push(player); // if the player has a position already add them next
         } else {
-            playersWithoutPosition.push(player);
+            playersWithoutPosition.push(player); // if the player does not have a position add them last
         }
     }
 
+    playersWithPosition = playersWith0Position.concat(playersWithPosition);
+
     // Sort players with queuePosition and update their queuePosition values
     playersWithPosition.sort((a, b) => a.queuePosition - b.queuePosition);
+
+    // add the null position players to the end.
+    allPlayers = playersWithPosition.concat(playersWithoutPosition);
     let newPosition = 1;
 
-    for (const player of playersWithPosition) {
+    for (const player of allPlayers) {
         player.queuePosition = newPosition;
         newPosition++;
     }
 
-    // Combine the updated players
-    const updatedQueuePositions: IQueuePlayer[] = [...playersWithPosition, ...playersWithoutPosition];
-    
-    await Promise.all(updatedQueuePositions.map(qp => {
+    await Promise.all(allPlayers.map(qp => {
         return qp.save();
     }));
 };

@@ -8,7 +8,7 @@ dotenv_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '.
 
 load_dotenv(dotenv_path=dotenv_path)
 databaseToken = os.getenv('databaseToken')
-database_name = os.getenv('DB_NAME', 'test')
+database_name = os.getenv('DB_NAME', 'ShadowrunDBTest')
 player_collection_name = os.getenv('PLAYER_COLLECTION_NAME', 'players')
 queue_collection_name = os.getenv('QUEUE_COLLECTION_NAME', 'queues')
 queueplayers_collection_name = os.getenv('QUEUEPLAYERS_COLLECTION_NAME', 'queueplayers')
@@ -17,14 +17,15 @@ queueplayers_collection_name = os.getenv('QUEUEPLAYERS_COLLECTION_NAME', 'queuep
 
 # Elo scores of [1050, 1026, 1009, 999, 1049, 1025, 1010, 1000] will team up the first four and the last four
 players_and_new_scores = [
-    ["670444654155530240", 1050],
-    ["421558155718295553", 1026],
-    ["312505608844738562", 1009],
-    ["238329746671271936", 999],
-    ["256566189566722048", 1049],
-    ["236408429487456266", 1025],
-    ["111613988076310528", 1010],
-    ["95376035620589568", 1000],
+    ["1", 1050],
+    ["2", 1026],
+    ["3", 1009],
+    ["4", 999],
+    ["5", 1049],
+    ["6", 1025],
+    ["7", 1010],
+    ["8", 1000],
+    ["9", 1000],
 ]
 
 exception_id = players_and_new_scores[0][0] # The first person in the above list  will not be queued up.
@@ -32,7 +33,7 @@ exception_id = players_and_new_scores[0][0] # The first person in the above list
                                             # update the queue with everyone else
                                             # Ideally, this is the tester's Discord ID
 
-queue_message_id = "1138885962382979183" # Replace None with your queue message ID string to queue for a specific queue.
+queue_message_id = "" # Replace None with your queue message ID string to queue for a specific queue.
 
 # If not queuing for a specific queue, players will be queued up to most recent queue with the following rankMin/rankMax parameters
 rankMin = 1000
@@ -98,7 +99,7 @@ def main():
         queue_player = {
             'discordId': player_id,
             'messageId': queue_id,
-            'queuePosition': None, #i + 1,
+            'queuePosition': i + 1,
             'queueTime': datetime.now()
         }
         print(queue_player['queueTime'])

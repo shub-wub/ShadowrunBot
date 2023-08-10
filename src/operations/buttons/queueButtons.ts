@@ -17,10 +17,6 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
     const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
-    //const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
-    // TODO check if they are already in a match for this queue. 
-    // I think we will have to set a bool on the Iqueueplayer record for if the match is finished to check here
-    //const inAMatchQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id}, { discordId: userId}, { matchMessageId: { $exists: false } }]);
     const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
@@ -50,14 +46,6 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                 });
                 return;
             }
-
-            // if (queueUser != null && queueUser.messageId == interaction.message.id) {
-            //     await interaction.reply({
-            //         content: `You have already been added to the queue. You can either wait for a match or remove yourself.`,
-            //         ephemeral: true
-            //     });
-            //     return;
-            // }
 
             if (queueUser != null && queueUser.matchMessageId == null) {
                 await interaction.reply({

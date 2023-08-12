@@ -139,6 +139,7 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		try {
 			await new Guild({
 				guildId: interaction.commandGuildId as string,
+				hideNameElo: true,
 				rankedCategoryId: cat.id,
 				queueChannelId: results[0].id,
 				matchChannelId: results[1].id,

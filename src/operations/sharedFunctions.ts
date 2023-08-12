@@ -82,7 +82,7 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
     for (let i = 0; i < losingTeam.length; i++) {
         losingTeamRating += losingTeam[i].rating;
     }
-    // if the favorite wins
+
     if (Math.abs(winningTeamRating - losingTeamRating) > 400) {
         winningTeamDifferenceAdjustment = teamEloDifference400;
         losingTeamDifferenceAdjustment = teamEloDifference400;
@@ -94,11 +94,10 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
         losingTeamDifferenceAdjustment = teamEloDifference200;
     } 
 
-    // if the underdog won
-    if (winningTeamRating < losingTeamRating) {
-        losingTeamDifferenceAdjustment *= -1;
-    } else {
+    // if the favorite won both teams take less impact
+    if (winningTeamRating > losingTeamRating) {
         winningTeamDifferenceAdjustment *= -1;
+        losingTeamDifferenceAdjustment *= -1;
     }
     
     winningTeam.forEach(player => {

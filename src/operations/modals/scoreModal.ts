@@ -408,7 +408,6 @@ export const updateMatchEmbed = async (interaction: ModalSubmitInteraction<Cache
 
 
 export const saveMatchPlayers = async (match: IMatch, team1Players: IPlayer[], team2Players: IPlayer[]) => {
-	var matchPlayerRecord = null;
 	var matchplayers = [];
 	try {
 		for (const player of team1Players) {
@@ -425,7 +424,7 @@ export const saveMatchPlayers = async (match: IMatch, team1Players: IPlayer[], t
 				team: 2,
 			});
 		}
-		matchPlayerRecord = await MatchPlayer.insertMany(matchplayers);
+		await MatchPlayer.insertMany(matchplayers);
 	} catch (error) {
 		mongoError(error as MongooseError);
 		console.log(`There was an error adding the player to the matchplayers in the database.`);

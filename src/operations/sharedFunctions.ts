@@ -64,11 +64,16 @@ export const teamRankingDifference = (team1: IPlayer[], team2: IPlayer[]): numbe
     return Math.abs(team1Ranking - team2Ranking);
 }
 
-export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], rnaRoundsWon: number, lineageRoundsWon: number): any => {
+export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], winningTeamRoundsWon: number, losingTeamRoundsWon: number): any => {
     let winningTeamRating = 0;
     let losingTeamRating = 0;
-    let roundDifference = Math.abs(rnaRoundsWon - lineageRoundsWon);
-    let roundAdjustment = ((roundDifference * 100) / 6) / 200
+    let teamEloDifference200 = .25;
+    let teamEloDifference300 = .50;
+    let teamEloDifference400 = .75;
+    let roundDifference = Math.abs(winningTeamRoundsWon - losingTeamRoundsWon);
+    let roundAdjustment = (roundDifference / 6) / 2;
+    var winningTeamDifferenceAdjustment = 0;
+    var losingTeamDifferenceAdjustment = 0;
 
     for (let i = 0; i < winningTeam.length; i++) {
         winningTeamRating += winningTeam[i].rating;
@@ -77,12 +82,30 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
     for (let i = 0; i < losingTeam.length; i++) {
         losingTeamRating += losingTeam[i].rating;
     }
+    // if the favorite wins
+    if (Math.abs(winningTeamRating - losingTeamRating) > 400) {
+        winningTeamDifferenceAdjustment = teamEloDifference400;
+        losingTeamDifferenceAdjustment = teamEloDifference400;
+    } else if (Math.abs(winningTeamRating - losingTeamRating) > 300) {
+        winningTeamDifferenceAdjustment = teamEloDifference300;
+        losingTeamDifferenceAdjustment = teamEloDifference300;
+    } else if (Math.abs(winningTeamRating - losingTeamRating) > 200) {
+        winningTeamDifferenceAdjustment = teamEloDifference200;
+        losingTeamDifferenceAdjustment = teamEloDifference200;
+    } 
 
+    // if the underdog won
+    if (winningTeamRating < losingTeamRating) {
+        losingTeamDifferenceAdjustment *= -1;
+    } else {
+        winningTeamDifferenceAdjustment *= -1;
+    }
+    
     winningTeam.forEach(player => {
         player.wins += 1;
         let winLossRatio = player.wins / (player.wins + player.losses);
-        let k = 26 * (winLossRatio + roundAdjustment + 1);
-        let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 1400));
+        let k = 26 * (winLossRatio + roundAdjustment + winningTeamDifferenceAdjustment + 1);
+        let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 4000));
         player.rating = player.rating + k * (1 - expectedScore);
         player.rating = Math.round(player.rating);
     });
@@ -90,8 +113,8 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
     losingTeam.forEach(player => {
         player.losses += 1;
         let winLossRatio = player.wins / (player.wins + player.losses);
-        let k = 25 * (roundAdjustment + (1 - winLossRatio ) + 1);
-        let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 1400));
+        let k = 25 * ((1 - winLossRatio) + roundAdjustment + losingTeamDifferenceAdjustment + 1);
+        let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 4000));
         player.rating = player.rating + k * (0 - expectedScore);
         player.rating = Math.round(player.rating);
     });

@@ -149,6 +149,7 @@ export interface IMap extends mongoose.Document {
 
 export interface IGuild extends mongoose.Document {
     guildId: string,
+    hideNameElo: boolean,
     rankedCategoryId: string,
     queueChannelId: string,
     matchChannelId: string,

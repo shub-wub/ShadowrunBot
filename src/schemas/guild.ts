@@ -3,6 +3,7 @@ import { IGuild } from "../types";
 
 const guildSchema = new Schema<IGuild>({
     guildId: { type : String , unique : true, required : true },
+    hideNameElo: Boolean,
     rankedCategoryId: { type : String , unique : true, required : true },
     queueChannelId: { type : String , unique : true, required : true },
     matchChannelId: { type : String , unique : true, required : true },

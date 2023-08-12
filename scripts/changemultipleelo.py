@@ -11,6 +11,7 @@ databaseToken = os.getenv('databaseToken')
 database_name = os.getenv('DB_NAME', 'test')
 player_collection_name = os.getenv('PLAYER_COLLECTION_NAME', 'players')
 
+
 # Can add any number of users to the following list
 players_and_new_scores = [
     ["1", 1050],

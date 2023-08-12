@@ -102,7 +102,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        // await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
             }
@@ -262,13 +262,26 @@ export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): Ac
 export const createMatch = async (interaction: ButtonInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[]): Promise<void> => {
     const playersQuery = Player.find({ discordId: { $in: queuePlayers.map(qp => qp.discordId) } });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
-    const mapQuery = Map.find<IMap>();
-    await Promise.all([playersQuery, guildQuery, mapQuery]).then(async (queryResults: [IPlayer[], IGuild | null, IMap[]]) => {
-        if (queryResults[0].length !== queuePlayers.length) {
+    const mapQueryG1 = Map.find<IMap>({ gameType: "Attrition" });
+    const mapQueryG2 = Map.find<IMap>({ gameType: "Extraction" });
+    const mapQueryG3 = Map.find<IMap>({ $or: [{ gameType: "Attrition" }, { gameType: "AttritionG3" }] });
+    await Promise.all([playersQuery, guildQuery, mapQueryG1, mapQueryG2, mapQueryG3]).then(async (queryResults: [IPlayer[], IGuild | null, IMap[], IMap[], IMap[]]) => {
+        const players = queryResults[0];
+        const guild = queryResults[1];
+
+        // Games 1-3 have different map pools
+        // Game 1 = attritionMaps (does not include Pinnacle)
+        // Game 2 = extractionMaps
+        // Game 3 = allAttritionMaps (includes Pinnacle)
+        const attritionMaps = queryResults[2];
+        const extractionMaps = queryResults[3];
+        const allAttritionMaps = queryResults[4];
+
+        if (players.length !== queuePlayers.length) {
             console.log("Not all players were found.")
             return;
         }
-        if (!queryResults[1]) {
+        if (!guild) {
             await interaction.reply({
                 content: `There was no guild record found. Try using /srinitialize first.`,
                 ephemeral: true,
@@ -276,25 +289,34 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
             return;
         }
 
-        // Generate 3 random indices without repetition
+        // Randomize maps in array
         var maps: IMap[] = [];
-        const indices = new Set<number>();
-        while (indices.size < 3) {
-            const index = Math.floor(Math.random() * queryResults[2].length);
-            if (!indices.has(index))
-                indices.add(index);
-        }
-        // Add the randomly selected maps to the 'maps' array
-        for (const index of indices)
-            maps.push(queryResults[2][index]);
+        const attritionIndex = Math.floor(Math.random() * attritionMaps.length);
+        maps.push(attritionMaps[attritionIndex]);
 
-        var teams = generateTeams(queryResults[0]);
-        const initialEmbed = createMatchEmbed(teams[1], teams[0], queryResults[1], maps);
+        while (true) {
+            const extractionIndex = Math.floor(Math.random() * extractionMaps.length);
+            if (maps[0].uniqueId != extractionMaps[extractionIndex].uniqueId) {
+                maps.push(extractionMaps[extractionIndex]);
+                break;
+            }
+        }
+
+        while (true) {
+            const allAttritionMapsIndex = Math.floor(Math.random() * allAttritionMaps.length);
+            if (maps[0].name != allAttritionMaps[allAttritionMapsIndex].name) {
+                maps.push(allAttritionMaps[allAttritionMapsIndex]);
+                break;
+            }
+        }
+
+        var teams = generateTeams(players);
+        const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, maps);
         const buttonRow1 = createMatchButtonRow1(false, true, true);
         const buttonRow2 = createMatchButtonRow2(false, true, true);
 
         var channel = await client.channels.fetch(
-            queryResults[1].matchChannelId
+            guild.matchChannelId
         );
 
         var message = await (channel as TextChannel).send({

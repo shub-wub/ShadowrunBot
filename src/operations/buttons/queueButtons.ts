@@ -454,7 +454,7 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
                     queuePlayers += `Player ${i + 1} ${emoji} queued <t:${unixTimestamp}:R>\n`;
                 }
                 else {
-                    queuePlayers += `<@${updatedQueuePlayers[i].discordId}> queued <t:${unixTimestamp}:R>\n`;
+                    queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji} queued <t:${unixTimestamp}:R>\n`;
                 }
             } else {
                 if (hidePlayerNames) {

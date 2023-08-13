@@ -64,11 +64,16 @@ export const teamRankingDifference = (team1: IPlayer[], team2: IPlayer[]): numbe
     return Math.abs(team1Ranking - team2Ranking);
 }
 
-export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], rnaRoundsWon: number, lineageRoundsWon: number): any => {
+export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], team1Rounds: number, team2Rounds: number): any => {
     let winningTeamRating = 0;
     let losingTeamRating = 0;
-    let roundDifference = Math.abs(rnaRoundsWon - lineageRoundsWon);
-    let roundAdjustment = ((roundDifference * 100) / 6) / 200
+    let teamEloDifference100 = .25;
+    let teamEloDifference200 = .50;
+    let teamEloDifference300 = .75;
+    let roundDifference = Math.abs(team1Rounds - team2Rounds);
+    let roundAdjustment = (roundDifference / 5);
+    var winningTeamDifferenceAdjustment = 0;
+    var losingTeamDifferenceAdjustment = 0;
 
     for (let i = 0; i < winningTeam.length; i++) {
         winningTeamRating += winningTeam[i].rating;
@@ -78,20 +83,46 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
         losingTeamRating += losingTeam[i].rating;
     }
 
+    var ratingDifference = Math.abs(winningTeamRating - losingTeamRating);
+    // dampen/increase if there are outliars causing big differences in team elos
+    if (ratingDifference > 300) {
+        winningTeamDifferenceAdjustment = teamEloDifference300;
+        losingTeamDifferenceAdjustment = teamEloDifference300;
+    } else if (ratingDifference > 200) {
+        winningTeamDifferenceAdjustment = teamEloDifference200;
+        losingTeamDifferenceAdjustment = teamEloDifference200;
+    } else if (ratingDifference > 100) {
+        winningTeamDifferenceAdjustment = teamEloDifference100;
+        losingTeamDifferenceAdjustment = teamEloDifference100;
+    } 
+
+    // if the favorite won both teams take less impact
+    if (winningTeamRating > losingTeamRating) {
+        winningTeamDifferenceAdjustment *= -1;
+        losingTeamDifferenceAdjustment *= -1;
+    }
+
+    // if they lost/won with karma we implement roundAdjustment otherwise remove it
+    if (roundDifference < 3) {
+        roundDifference = 0;
+    }
+    
+    // apply winner adjustments
     winningTeam.forEach(player => {
         player.wins += 1;
         let winLossRatio = player.wins / (player.wins + player.losses);
-        let k = 26 * (winLossRatio + roundAdjustment + 1);
-        let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 1400));
+        let k = 22 * (winLossRatio + roundAdjustment + winningTeamDifferenceAdjustment + 1);
+        let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 2500));
         player.rating = player.rating + k * (1 - expectedScore);
         player.rating = Math.round(player.rating);
     });
 
+    // apply loser adjustments
     losingTeam.forEach(player => {
         player.losses += 1;
         let winLossRatio = player.wins / (player.wins + player.losses);
-        let k = 25 * (roundAdjustment + (1 - winLossRatio ) + 1);
-        let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 1400));
+        let k = 21 * ((1 - winLossRatio) + roundAdjustment + losingTeamDifferenceAdjustment + 1);
+        let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 2500));
         player.rating = player.rating + k * (0 - expectedScore);
         player.rating = Math.round(player.rating);
     });

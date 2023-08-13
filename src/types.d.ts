@@ -138,15 +138,18 @@ export interface IMatchPlayer extends mongoose.Document {
 export interface ILeaderboard extends mongoose.Document {
     messageId: string,
     device: string,
-    page: number;
+    page: number
 }
 
 export interface IMap extends mongoose.Document {
-    name: string
+    name: string,
+    gameType: string,
+    uniqueId: number
 }
 
 export interface IGuild extends mongoose.Document {
     guildId: string,
+    hideNameElo: boolean,
     rankedCategoryId: string,
     queueChannelId: string,
     matchChannelId: string,
@@ -170,5 +173,5 @@ export interface IGuild extends mongoose.Document {
     platinumMin: number,
     platinumMax: number,
     diamondMin: number,
-    diamondMax: number,
+    diamondMax: number
 }

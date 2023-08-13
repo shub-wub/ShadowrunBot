@@ -200,7 +200,9 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 			addWinnersBackToQueue(interaction, client, team2Players, guild, match);
 		}
 		var players = team1Players.concat(team2Players);
-		updateNames(interaction, client, players, guild);
+		if(!guild.hideNameElo) {
+			updateNames(interaction, client, players, guild);
+		}
 		updateRoles(interaction, client, players, guild);
 		updateMatchEmbed(interaction, team1Players, team2Players, guild, match, playersWithPreviousRating);
 		try {
@@ -287,7 +289,20 @@ export const updateRoles = async (interaction: ModalSubmitInteraction<CacheType>
 			if (player.discordId != interaction.guild?.ownerId && !isAdmin) {
 				var roleId = getRankRole(player, guild);
 				var role = qr.guild.roles.cache.find(role => role.id === roleId);
+				var memberRoles = qr.roles.cache.filter(role => 
+					role.id === guild.bronzeRoleId || 
+					role.id === guild.silverRoleId || 
+					role.id === guild.goldRoleId || 
+					role.id === guild.platinumRoleId || 
+					role.id === guild.diamondRoleId);
 				try {
+					// remove there current ranked roles
+					if (memberRoles.size > 0) {
+						memberRoles.each(r => {
+							qr.roles.remove(r);
+						});
+					}
+					// add new ranked role
 					if (role)
 						qr.roles.add(role);
 				} catch(error) {
@@ -393,7 +408,6 @@ export const updateMatchEmbed = async (interaction: ModalSubmitInteraction<Cache
 
 
 export const saveMatchPlayers = async (match: IMatch, team1Players: IPlayer[], team2Players: IPlayer[]) => {
-	var matchPlayerRecord = null;
 	var matchplayers = [];
 	try {
 		for (const player of team1Players) {
@@ -410,7 +424,7 @@ export const saveMatchPlayers = async (match: IMatch, team1Players: IPlayer[], t
 				team: 2,
 			});
 		}
-		matchPlayerRecord = await MatchPlayer.insertMany(matchplayers);
+		await MatchPlayer.insertMany(matchplayers);
 	} catch (error) {
 		mongoError(error as MongooseError);
 		console.log(`There was an error adding the player to the matchplayers in the database.`);

@@ -428,10 +428,10 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
             var emoji = getRankEmoji(player, guild);
             const unixTimestamp = Math.floor(updatedQueuePlayers[i].queueTime.getTime() / 1000);
             if (hidePlayerNames) {
-                queuePlayers += `Player ${i + 1} ${emoji} in queue since <t:${unixTimestamp}:R>\n`;
+                queuePlayers += `Player ${i + 1} ${emoji} queued <t:${unixTimestamp}:R>\n`;
             }
             else {
-                queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating} in queue since <t:${unixTimestamp}:R>\n`;
+                queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating} queued <t:${unixTimestamp}:R>\n`;
             }
         }
     }

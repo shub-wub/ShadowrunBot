@@ -111,8 +111,8 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
     winningTeam.forEach(player => {
         player.wins += 1;
         let winLossRatio = player.wins / (player.wins + player.losses);
-        let k = 22 * (winLossRatio + roundAdjustment + winningTeamDifferenceAdjustment + 1);
-        let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 2500));
+        let k = 23 * (winLossRatio + roundAdjustment + winningTeamDifferenceAdjustment + 1);
+        let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 5000));
         player.rating = player.rating + k * (1 - expectedScore);
         player.rating = Math.round(player.rating);
     });
@@ -122,7 +122,7 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
         player.losses += 1;
         let winLossRatio = player.wins / (player.wins + player.losses);
         let k = 21 * ((1 - winLossRatio) + roundAdjustment + losingTeamDifferenceAdjustment + 1);
-        let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 2500));
+        let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 5000));
         player.rating = player.rating + k * (0 - expectedScore);
         player.rating = Math.round(player.rating);
     });

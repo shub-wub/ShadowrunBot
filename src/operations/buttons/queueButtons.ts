@@ -207,9 +207,9 @@ export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[
         team2Total += team2Players[i].rating;
         team2 += `<@${team2Players[i].discordId}> ${emoji}${team2Players[i].rating}\n`;
     }
-    fields.push({ name: `Maps`, value: `${maps[0].name}\n${maps[1].name}\n${maps[2].name}`, inline: false });
-    fields.push({ name: `Team 1(${team1Total})`, value: team1, inline: true });
-    fields.push({ name: `Team 2(${team2Total})`, value: team2, inline: true });
+    fields.push({ name: `Maps:`, value: `${maps[0].name}\n${maps[1].name}\n${maps[2].name}`, inline: false });
+    fields.push({ name: `Team 1 - (${team1Total})`, value: team1, inline: true });
+    fields.push({ name: `Team 2 - (${team2Total})`, value: team2, inline: true });
     var randomTeam = Math.floor(Math.random() * 2) + 1;
     const embed: any = new EmbedBuilder()
         .setTitle(`Team ${randomTeam} picks server and side first`)
@@ -222,17 +222,17 @@ export const createMatchButtonRow1 = (g1: boolean, g2: boolean, g3: boolean): Ac
     const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
     const team1Game1Button = new ButtonBuilder()
         .setCustomId("scoret1g1")
-        .setLabel("Score T1G1")
+        .setLabel("T1: Game 1")
         .setDisabled(g1)
         .setStyle(ButtonStyle.Primary);
     const team1Game2Button = new ButtonBuilder()
         .setCustomId("scoret1g2")
-        .setLabel("Score T1G2")
+        .setLabel("Game 2")
         .setDisabled(g2)
         .setStyle(ButtonStyle.Primary);
     const team1Game3Button = new ButtonBuilder()
         .setCustomId("scoret1g3")
-        .setLabel("Score T1G3")
+        .setLabel("Game 3")
         .setDisabled(g3)
         .setStyle(ButtonStyle.Primary);
     buttonRow.addComponents(team1Game1Button, team1Game2Button, team1Game3Button);
@@ -242,17 +242,17 @@ export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): Ac
     const buttonRow: ActionRowBuilder<ButtonBuilder> = new ActionRowBuilder<ButtonBuilder>();
     const team2Game1Button = new ButtonBuilder()
         .setCustomId("scoret2g1")
-        .setLabel("Score T2G1")
+        .setLabel("T2: Game 1")
         .setDisabled(g1)
         .setStyle(ButtonStyle.Danger);
     const team2Game2Button = new ButtonBuilder()
         .setCustomId("scoret2g2")
-        .setLabel("Score T2G2")
+        .setLabel("Game 2")
         .setDisabled(g2)
         .setStyle(ButtonStyle.Danger);
     const team2Game3Button = new ButtonBuilder()
         .setCustomId("scoret2g3")
-        .setLabel("Score T2G3")
+        .setLabel("Game 3")
         .setDisabled(g3)
         .setStyle(ButtonStyle.Danger);
     buttonRow.addComponents(team2Game1Button, team2Game2Button, team2Game3Button);
@@ -449,11 +449,20 @@ export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, qu
             if (!player) return;
             var emoji = getRankEmoji(player, guild);
             const unixTimestamp = Math.floor(updatedQueuePlayers[i].queueTime.getTime() / 1000);
-            if (hidePlayerNames) {
-                queuePlayers += `Player ${i + 1} ${emoji} in queue since <t:${unixTimestamp}:R>\n`;
-            }
-            else {
-                queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating} in queue since <t:${unixTimestamp}:R>\n`;
+            if (guild.hideNameElo) {
+                if (hidePlayerNames) {
+                    queuePlayers += `Player ${i + 1} ${emoji} queued <t:${unixTimestamp}:R>\n`;
+                }
+                else {
+                    queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji} queued <t:${unixTimestamp}:R>\n`;
+                }
+            } else {
+                if (hidePlayerNames) {
+                    queuePlayers += `Player ${i + 1} ${emoji} queued <t:${unixTimestamp}:R>\n`;
+                }
+                else {
+                    queuePlayers += `<@${updatedQueuePlayers[i].discordId}> ${emoji}${player.rating} queued <t:${unixTimestamp}:R>\n`;
+                }
             }
         }
     }

@@ -64,15 +64,15 @@ export const teamRankingDifference = (team1: IPlayer[], team2: IPlayer[]): numbe
     return Math.abs(team1Ranking - team2Ranking);
 }
 
-export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], winningTeamRoundsWon: number, losingTeamRoundsWon: number): any => {
+export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], team1Rounds: number, team2Rounds: number): any => {
     const currentDate = new Date();
     let winningTeamRating = 0;
     let losingTeamRating = 0;
-    let teamEloDifference200 = .25;
-    let teamEloDifference300 = .50;
-    let teamEloDifference400 = .75;
-    let roundDifference = Math.abs(winningTeamRoundsWon - losingTeamRoundsWon);
-    let roundAdjustment = (roundDifference / 6) / 2;
+    let teamEloDifference100 = .25;
+    let teamEloDifference200 = .50;
+    let teamEloDifference300 = .75;
+    let roundDifference = Math.abs(team1Rounds - team2Rounds);
+    let roundAdjustment = (roundDifference / 5);
     var winningTeamDifferenceAdjustment = 0;
     var losingTeamDifferenceAdjustment = 0;
 
@@ -84,15 +84,17 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
         losingTeamRating += losingTeam[i].rating;
     }
 
-    if (Math.abs(winningTeamRating - losingTeamRating) > 400) {
-        winningTeamDifferenceAdjustment = teamEloDifference400;
-        losingTeamDifferenceAdjustment = teamEloDifference400;
-    } else if (Math.abs(winningTeamRating - losingTeamRating) > 300) {
+    var ratingDifference = Math.abs(winningTeamRating - losingTeamRating);
+    // dampen/increase if there are outliars causing big differences in team elos
+    if (ratingDifference > 300) {
         winningTeamDifferenceAdjustment = teamEloDifference300;
         losingTeamDifferenceAdjustment = teamEloDifference300;
-    } else if (Math.abs(winningTeamRating - losingTeamRating) > 200) {
+    } else if (ratingDifference > 200) {
         winningTeamDifferenceAdjustment = teamEloDifference200;
         losingTeamDifferenceAdjustment = teamEloDifference200;
+    } else if (ratingDifference > 100) {
+        winningTeamDifferenceAdjustment = teamEloDifference100;
+        losingTeamDifferenceAdjustment = teamEloDifference100;
     } 
 
     // if the favorite won both teams take less impact
@@ -100,23 +102,30 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
         winningTeamDifferenceAdjustment *= -1;
         losingTeamDifferenceAdjustment *= -1;
     }
+
+    // if they lost/won with karma we implement roundAdjustment otherwise remove it
+    if (roundDifference < 3) {
+        roundDifference = 0;
+    }
     
+    // apply winner adjustments
     winningTeam.forEach(player => {
         player.wins += 1;
         player.lastMatchDate = currentDate;
         let winLossRatio = player.wins / (player.wins + player.losses);
-        let k = 26 * (winLossRatio + roundAdjustment + winningTeamDifferenceAdjustment + 1);
-        let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 4000));
+        let k = 23 * (winLossRatio + roundAdjustment + winningTeamDifferenceAdjustment + 1);
+        let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 5000));
         player.rating = player.rating + k * (1 - expectedScore);
         player.rating = Math.round(player.rating);
     });
 
+    // apply loser adjustments
     losingTeam.forEach(player => {
         player.losses += 1;
         player.lastMatchDate = currentDate;
         let winLossRatio = player.wins / (player.wins + player.losses);
-        let k = 25 * ((1 - winLossRatio) + roundAdjustment + losingTeamDifferenceAdjustment + 1);
-        let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 4000));
+        let k = 21 * ((1 - winLossRatio) + roundAdjustment + losingTeamDifferenceAdjustment + 1);
+        let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 5000));
         player.rating = player.rating + k * (0 - expectedScore);
         player.rating = Math.round(player.rating);
     });

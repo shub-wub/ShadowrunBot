@@ -15,7 +15,9 @@ const command: SlashCommand = {
 		),
 	execute: async (interaction: CommandInteraction, client: Client) => {
 		// Retrieve the players from the database and sort by rating
-		const players = await Player.find().sort("-rating");
+		const currentDate = new Date();
+		const cutoffDate = new Date().setDate(currentDate.getDate() - 60);
+		const players = await Player.find({lastMatchDate: {$gte: cutoffDate}}).sort("-rating");
 		const playersPerPage = 25;
 		var device: string = (interaction.options as any).getString("device");
 		await leaderboard(

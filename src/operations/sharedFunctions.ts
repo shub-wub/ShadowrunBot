@@ -65,6 +65,7 @@ export const teamRankingDifference = (team1: IPlayer[], team2: IPlayer[]): numbe
 }
 
 export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], winningTeamRoundsWon: number, losingTeamRoundsWon: number): any => {
+    const currentDate = new Date();
     let winningTeamRating = 0;
     let losingTeamRating = 0;
     let teamEloDifference200 = .25;
@@ -102,6 +103,7 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
     
     winningTeam.forEach(player => {
         player.wins += 1;
+        player.lastMatchDate = currentDate;
         let winLossRatio = player.wins / (player.wins + player.losses);
         let k = 26 * (winLossRatio + roundAdjustment + winningTeamDifferenceAdjustment + 1);
         let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 4000));
@@ -111,6 +113,7 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
 
     losingTeam.forEach(player => {
         player.losses += 1;
+        player.lastMatchDate = currentDate;
         let winLossRatio = player.wins / (player.wins + player.losses);
         let k = 25 * ((1 - winLossRatio) + roundAdjustment + losingTeamDifferenceAdjustment + 1);
         let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 4000));

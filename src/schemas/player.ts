@@ -11,7 +11,8 @@ const playerSchema = new Schema<IPlayer>({
     resurrects: Number,
     bonusTotal: Number,
     friendlyFire: Number,
-    isBanned: Boolean
+    isBanned: Boolean,
+    lastMatchDate: Date
 });
 
 export default model("Player", playerSchema, "players");

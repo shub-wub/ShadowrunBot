@@ -87,6 +87,7 @@ export interface IPlayer extends mongoose.Document {
     bonusTotal: number,
     friendlyFire: number,
     isBanned: boolean
+    lastMatchDate: Date,
 }
 
 export interface IQueuePlayer extends mongoose.Document {

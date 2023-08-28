@@ -316,20 +316,22 @@ export const updateRoles = async (interaction: ModalSubmitInteraction<CacheType>
 export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, winningPlayers: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
 	// get the users waiting in the queue when the match ended
 	const queueUsersQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: match.queueId }, { matchMessageId: { $exists: false } }]);
+	const queueQuery = await Queue.findOne<IQueue>({ messageId: match.queueId });
+	var eligibleWinningPlayers = [];
+	for (const wp of winningPlayers) {
+		if (queueQuery && queueQuery?.rankMax >= wp.rating) {
+			eligibleWinningPlayers.push({discordId: wp.discordId})
+		}
+	}
+	if (eligibleWinningPlayers.length == 0) return;
 	const winnersQueueUsersQuery = Player.find<IPlayer>().and([{
-		$or: [
-			{ discordId: winningPlayers[0].discordId },
-			{ discordId: winningPlayers[1].discordId },
-			{ discordId: winningPlayers[2].discordId },
-			{ discordId: winningPlayers[3].discordId },
-		],
+		$or: eligibleWinningPlayers,
 	},
 	]);
 
 	var queueEmbedMessage = await (client?.channels?.cache.get(guild.queueChannelId) as TextChannel).messages.fetch(match.queueId);
 	const receivedEmbed = queueEmbedMessage.embeds[0];
 	const queueEmbed = EmbedBuilder.from(receivedEmbed);
-	const queueQuery = Queue.findOne<IQueue>({ messageId: match.queueId });
 
 	Promise.all([queueUsersQuery, winnersQueueUsersQuery, queueQuery]).then(async (queryResults: [IQueuePlayer[], IPlayer[], IQueue | null]) => {
 		var queuePlayers = queryResults[0];

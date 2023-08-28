@@ -98,6 +98,8 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		parent: cat.id,
 	});
 
+	const favelaAttritionCreate = new Map({ name: "Favela (Attrition)", gameType: "Attrition", uniqueId: 5 }).save();
+	const favelaExtractionCreate = new Map({ name: "Favela (Extraction)", gameType: "Extraction", uniqueId: 5 }).save();
 	const lobbyCreate = new Map({ name: "Lobby Small (Attrition)", gameType: "Attrition", uniqueId: 2 }).save();
 	const lobbyExtractionCreate = new Map({ name: "Lobby (Extraction)", gameType: "Extraction", uniqueId: 2 }).save();
 	const lobbyAttritionCreate = new Map({ name: "Lobby (Attrition)", gameType: "Attrition", uniqueId: 2 }).save();
@@ -107,7 +109,6 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 	const pinnacleCreate = new Map({ name: "Pinnacle (Attrition)", gameType: "AttritionG3", uniqueId: 3 }).save();
 	const pinnacleExtractionCreate = new Map({ name: "Pinnacle (Extraction)", gameType: "Extraction", uniqueId: 3 }).save();
 	const powerStationCreate = new Map({ name: "Power Station (Attrition)", gameType: "Attrition", uniqueId: 5 }).save();
-	const pocoCreate = new Map({ name: "Poco Small (Attrition)", gameType: "Attrition", uniqueId: 4 }).save();
 	const pocoAttritionCreate = new Map({ name: "Poco (Attrition)", gameType: "Attrition", uniqueId: 4 }).save();
 
 	Promise.all([
@@ -124,6 +125,8 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		goldRoleCreate as Promise<Role>,
 		platinumRoleCreate as Promise<Role>,
 		diamondRoleCreate as Promise<Role>,
+		favelaAttritionCreate,
+		favelaExtractionCreate,
 		lobbyCreate,
 		lobbyExtractionCreate,
 		lobbyAttritionCreate,
@@ -133,7 +136,6 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		pinnacleCreate,
 		pinnacleExtractionCreate,
 		powerStationCreate,
-		pocoCreate,
 		pocoAttritionCreate
 	]).then(async (results) => {
 		try {

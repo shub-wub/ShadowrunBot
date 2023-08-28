@@ -342,14 +342,15 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 			var queueRecord = null;
 			var currentTime = new Date();
 			try {
-				queueRecord = await new QueuePlayer({
+				queueRecord = new QueuePlayer({
 					discordId: wp.discordId,
 					messageId: match.queueId,
 					queueTime: currentTime
-				}).save();
+				});
 				if (queuePlayers.length > 8) {
 					queueRecord.queuePosition = 0; // 0 means they will be added to the front starting at 1
 				}
+				await queueRecord.save();
 			} catch (error) {
 				mongoError(error as MongooseError);
 				console.log(`There was an error adding the player to the queue in the database.`);

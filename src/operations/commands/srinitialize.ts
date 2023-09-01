@@ -98,8 +98,6 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		parent: cat.id,
 	});
 
-	const favelaAttritionCreate = new Map({ name: "Favela (Attrition)", gameType: "Attrition", uniqueId: 5 }).save();
-	const favelaExtractionCreate = new Map({ name: "Favela (Extraction)", gameType: "Extraction", uniqueId: 5 }).save();
 	const lobbyCreate = new Map({ name: "Lobby Small (Attrition)", gameType: "Attrition", uniqueId: 2 }).save();
 	const lobbyExtractionCreate = new Map({ name: "Lobby (Extraction)", gameType: "Extraction", uniqueId: 2 }).save();
 	const lobbyAttritionCreate = new Map({ name: "Lobby (Attrition)", gameType: "Attrition", uniqueId: 2 }).save();
@@ -125,8 +123,6 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		goldRoleCreate as Promise<Role>,
 		platinumRoleCreate as Promise<Role>,
 		diamondRoleCreate as Promise<Role>,
-		favelaAttritionCreate,
-		favelaExtractionCreate,
 		lobbyCreate,
 		lobbyExtractionCreate,
 		lobbyAttritionCreate,

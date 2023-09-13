@@ -17,7 +17,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
     const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }]);
-    const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({queuePosition: 1});
+    const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({ queuePosition: 1 });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
 
@@ -97,12 +97,12 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
             queuePlayers.push(queueRecord);
             await updateQueuePositions(queuePlayers);
 
-            if (queuePlayers.length >= 8) {
+            if (queuePlayers.length == 8) {
                 for (const uqp of queuePlayers) {
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        //await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
             }
@@ -176,7 +176,7 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, overri
 
             try {
                 await QueuePlayer.deleteOne({ _id: queryResults[0][0]._id });
-                var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({queuePosition: 1});
+                var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({ queuePosition: 1 });
             } catch (error) {
                 mongoError(error as MongooseError);
                 console.log(`There was an error deleting the player from the queue in the database.`)

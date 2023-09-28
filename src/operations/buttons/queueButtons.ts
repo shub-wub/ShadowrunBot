@@ -17,8 +17,8 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
     const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId, messageId: interaction.message.id }]);
-    const queueUserInMatchQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }, { matchMessageId: {$exists: true } }])
-    const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({queuePosition: 1});
+    const queueUserInMatchQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }, { matchMessageId: { $exists: true } }])
+    const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({ queuePosition: 1 });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
 
@@ -188,7 +188,7 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, overri
 
             try {
                 await QueuePlayer.deleteOne({ _id: queryResults[0][0]._id });
-                var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({queuePosition: 1});
+                var updatedQueue = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({ queuePosition: 1 });
             } catch (error) {
                 mongoError(error as MongooseError);
                 console.log(`There was an error deleting the player from the queue in the database.`)
@@ -523,15 +523,15 @@ export const updateQueuePositions = async (updatedQueuePlayers: IQueuePlayer[]):
     }));
 };
 
-export const removeNewMatchPlayersFromOtherQueues = async (interaction: ButtonInteraction<CacheType>, queuePlayers: IQueuePlayer[])=>{
+export const removeNewMatchPlayersFromOtherQueues = async (interaction: ButtonInteraction<CacheType>, queuePlayers: IQueuePlayer[]) => {
     for (const qp of queuePlayers) {
         try {
             await QueuePlayer.deleteMany(
-                { discordId: qp.discordId,  messageId: { $ne: interaction.message.id }}
+                { discordId: qp.discordId, messageId: { $ne: interaction.message.id } }
             )
-		} catch (error) {
-			mongoError(error as MongooseError);
-			console.log(`There was an error removing the players from the queueplayers in the database.`);
-		}
+        } catch (error) {
+            mongoError(error as MongooseError);
+            console.log(`There was an error removing the players from the queueplayers in the database.`);
+        }
     }
 }

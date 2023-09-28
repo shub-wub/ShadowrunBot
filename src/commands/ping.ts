@@ -12,7 +12,7 @@ const command: SlashCommand = {
 		// const players = await Player.find().sort("-rating");
 		// const playersPerPage = 25;
 		// var device: string = (interaction.options as any).getString("device");
-		await interaction.reply({content: "pong", ephemeral: true});
+		await interaction.reply({ content: "pong", ephemeral: true });
 	},
 	cooldown: 1,
 };

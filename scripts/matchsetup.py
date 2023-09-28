@@ -80,22 +80,27 @@ def main():
             print("player_id", player_id, "with ELO score of", new_elo_score, "but not queued in")
             continue
 
-        queue_player = queueplayers_collection.find_one({'discordId': player['discordId']})
-        if queue_player and 'matchMessageId' in queue_player:
+        queue_player_records = queueplayers_collection.find({'discordId': player['discordId']})
+        player_in_match = False
+        player_in_target_queue = False
+        for queue_player in queue_player_records:
+            if queue_player and 'matchMessageId' in queue_player:
+                player_in_match = True
+            elif queue_player and queue_player['messageId'] == queue_message_id:
+                player_in_target_queue = True
+                
+                
+
+        if player_in_match:
             print("Player is in a match and can not be queued up")
             continue
-        elif queue_player and queue_player['messageId'] == queue_message_id:
+        if player_in_target_queue:
             filter = {'_id': queue_player['_id']}
             new_position = { '$set' : {'queuePosition': i + 1} }
             queueplayers_collection.update_one(filter, new_position)
             print("Player", player_id, "already in a queue", queue_player['messageId'] + ".",  "Changed their ELO score to", str(new_elo_score) + ".", "New position in queue is", i + 1)      
             i += 1
             continue
-        elif queue_player:
-            print("Player is in another queue")
-            continue
-            
-
         queue_player = {
             'discordId': player_id,
             'messageId': queue_id,

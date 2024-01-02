@@ -318,33 +318,15 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
             }
         }
 
-        // Game 1 can not be the same map as game 3
+        // Game 1 and 2 can not be the same map as game 3
         while (true) {
           const allAttritionMapsIndex = Math.floor(Math.random() * allAttritionMaps.length);
-          if (maps[0].uniqueId != allAttritionMaps[allAttritionMapsIndex].uniqueId) {
-              maps.push(extractionMaps[allAttritionMapsIndex]);
-              break;
-          }
-      }
-        
-        // Game 2 can not be the same map as game 3
-        while (true) {
-          const allAttritionMapsIndex = Math.floor(Math.random() * allAttritionMaps.length);
-          if (maps[1].uniqueId != allAttritionMaps[allAttritionMapsIndex].uniqueId) {
+          if (maps[0].uniqueId != allAttritionMaps[allAttritionMapsIndex].uniqueId &&
+            maps[1].uniqueId != allAttritionMaps[allAttritionMapsIndex].uniqueId) {
               maps.push(allAttritionMaps[allAttritionMapsIndex]);
               break;
           }
       }
-
-        // Game 1 can not be the same game as game 3
-        // while (true) {
-        //     const allAttritionMapsIndex = Math.floor(Math.random() * allAttritionMaps.length);
-        //     if (maps[0].name != allAttritionMaps[allAttritionMapsIndex].name) {
-        //         maps.push(allAttritionMaps[allAttritionMapsIndex]);
-        //         break;
-        //     }
-        // }
-
 
         var teams = generateTeams(players);
         const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, maps);

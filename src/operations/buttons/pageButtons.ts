@@ -15,7 +15,7 @@ export const pageButton = async (
 ): Promise<void> => {
 	// Retrieve the players from the database and sort by rating
 	const currentDate = new Date();
-	const cutoffDate = new Date().setDate(currentDate.getDate() - 60);
+	const cutoffDate = new Date().setDate(currentDate.getDate() - 21);
 	const players = await Player.find({lastMatchDate: {$gte: cutoffDate}}).sort("-rating");
 	const playersPerPage = 25;
 	var leaderboardRecord = await Leaderboard.findOne<ILeaderboard>({

@@ -43,7 +43,7 @@ async def on_ready():
     matches = matches_collection.find({}).sort('_id', -1)
     total_matches = matches_collection.count_documents({})
     currenttime = datetime.now()
-    cutoffdate = currenttime - timedelta(days=60)
+    cutoffdate = currenttime - timedelta(days=21)
     active_players = 0
     i = 0
     for _match in matches:
@@ -61,7 +61,7 @@ async def on_ready():
         matchdate = matchdate.replace(tzinfo=None)
         print("Match was played on", matchdate, end=" ")
         if  cutoffdate > matchdate:
-            print("and is older than 60 days")
+            print("and is older than 21 days")
         else:
             print()
             matchplayers = matchplayers_collection.find({'matchMessageId': matchMessageId})

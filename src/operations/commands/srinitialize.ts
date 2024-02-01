@@ -107,7 +107,7 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 	const pinnacleCreate = new Map({ name: "Pinnacle (Attrition)", gameType: "AttritionG3", uniqueId: 3 }).save();
 	const pinnacleExtractionCreate = new Map({ name: "Pinnacle (Extraction)", gameType: "Extraction", uniqueId: 3 }).save();
 	const powerStationCreate = new Map({ name: "Power Station (Attrition)", gameType: "Attrition", uniqueId: 5 }).save();
-	const pocoAttritionCreate = new Map({ name: "Poco (Attrition)", gameType: "Attrition", uniqueId: 4 }).save();
+	const maelstromAttritionCreate = new Map({ name: "Maelstrom (Attrition)", gameType: "Attrition", uniqueId: 4 }).save();
 
 	Promise.all([
 		queueChannelCreate as Promise<TextChannel>,
@@ -132,7 +132,7 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		pinnacleCreate,
 		pinnacleExtractionCreate,
 		powerStationCreate,
-		pocoAttritionCreate
+		maelstromAttritionCreate
 	]).then(async (results) => {
 		try {
 			await new Guild({

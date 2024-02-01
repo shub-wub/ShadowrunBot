@@ -99,7 +99,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
             queuePlayers.push(queueRecord);
             await updateQueuePositions(queuePlayers);
 
-            if (queuePlayers.length >= 8) {
+            if (queuePlayers.length == 8) {
                 for (const uqp of queuePlayers) {
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);

@@ -10,7 +10,7 @@ const command: SlashCommand = {
 		.addStringOption((option) =>
 			option
 				.setName("device")
-				.setDescription('Enter either "pc" or "mobile"')
+				.setDescription('Enter either "pc", "pc2", or "mobile"')
 				.setRequired(true)
 		),
 	execute: async (interaction: CommandInteraction, client: Client) => {

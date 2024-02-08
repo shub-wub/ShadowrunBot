@@ -37,11 +37,11 @@ export const createLeaderboardEmbed = async (
             const playerPlace = i + 1 + (playersPerPage * (pageNumber - 1));
 
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
-
+			var gamesNumber = pagePlayers[i].wins + pagePlayers[i].losses;
             var emoji = getRankEmoji(pagePlayers[i], guildRecord);
 
 			wlr = Math.round(wlr * 100) / 100;
-            fields.push({name: " ", value: `**${playerPlace}.** <@${pagePlayers[i].discordId}> - ${emoji}${pagePlayers[i].rating} - ${wlr}`, inline: false});
+            fields.push({name: " ", value: `**${playerPlace}.** <@${pagePlayers[i].discordId}> - ${emoji}${pagePlayers[i].rating} | ${gamesNumber} | ${wlr}`, inline: false});
         }
     } else if (device == "pc") {
         var names = "";
@@ -51,7 +51,6 @@ export const createLeaderboardEmbed = async (
             const playerPlace = i + 1 + (playersPerPage * (pageNumber - 1));
 
             var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
-
             var emoji = getRankEmoji(pagePlayers[i], guildRecord);
 
             wlr = Math.round(wlr * 100) / 100;
@@ -61,7 +60,28 @@ export const createLeaderboardEmbed = async (
         }
         fields.push({name: "Name", value: names, inline: true});
         fields.push({name: "Rating", value: ratings, inline: true});
-        fields.push({name: "Win Loss Ratio", value: winlossratio, inline: true});
+        fields.push({name: "W/L Ratio", value: winlossratio, inline: true});
+
+    } else if (device == "pc2") {
+        var names = "";
+		var gamesPlayed = "";
+        var winlossratio = "";
+        for (let i = 0; i < pagePlayers.length; i++) {
+            const playerPlace = i + 1 + (playersPerPage * (pageNumber - 1));
+
+            var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
+            var gamesNumber = pagePlayers[i].wins + pagePlayers[i].losses;
+            var emoji = getRankEmoji(pagePlayers[i], guildRecord);
+
+            wlr = Math.round(wlr * 100) / 100;
+            names += `**${playerPlace}.** <@${pagePlayers[i].discordId}>\n`;
+            gamesPlayed += `${gamesNumber}\n`;
+            winlossratio += `${wlr}\n`;
+        }
+        fields.push({name: "Name", value: names, inline: true});
+        fields.push({name: "Maps Played", value: gamesPlayed, inline: true});
+        fields.push({name: "W/L Ratio", value: winlossratio, inline: true});
+
     }
     const embed: any = new EmbedBuilder()
         .setTitle('__**ELO Leaderboard**__')

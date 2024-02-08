@@ -59,7 +59,7 @@ const event: BotEvent = {
                     setTimeout(() => interaction.deleteReply(), 5000);
                     return
                 }
-                cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
+                // cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
                 cooldowns.set(`${customId}-${type}`, Date.now() + button.cooldown * 1000);
                 setTimeout(() => {
                     //cooldowns.delete(`${customId}-${type}-${user.username}`)

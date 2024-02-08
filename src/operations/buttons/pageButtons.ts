@@ -13,15 +13,21 @@ export const pageButton = async (
 	interaction: ButtonInteraction<CacheType>,
 	direction: string
 ): Promise<void> => {
-	// Retrieve the players from the database and sort by rating
-	const currentDate = new Date();
-	const cutoffDate = new Date().setDate(currentDate.getDate() - 21);
-	const players = await Player.find({lastMatchDate: {$gte: cutoffDate}}).sort("-rating");
-	const playersPerPage = 25;
 	var leaderboardRecord = await Leaderboard.findOne<ILeaderboard>({
 		messageId: interaction.message.id,
 	});
 	if (!leaderboardRecord) return;
+	// Retrieve the players from the database and sort by rating
+	const cutoffDate = new Date();
+	cutoffDate.setDate(cutoffDate.getDate() - 21);
+	const sortOption = {} as any;
+	leaderboardRecord.device == "pc2" ? sortOption['mapsPlayed'] = -1 : sortOption['rating'] = -1;
+	const players = await Player.aggregate([
+		{$match: {lastMatchDate: {$gte: cutoffDate}}},
+		{$addFields: {"mapsPlayed": {$add: ["$wins", "$losses"]}}},
+		{$sort: sortOption}
+	]);
+	const playersPerPage = 25;
 	if (direction == "previous") leaderboardRecord.page--;
 	else if (direction == "next") leaderboardRecord.page++;
 	try {

@@ -50,6 +50,11 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		color: "Aqua",
 		reason: "ShadowrunBot Ranked",
 	});
+	const obsidianRoleCreate = interaction.guild?.roles.create({
+		name: "Obsidian",
+		color: "DarkRed",
+		reason: "ShadowrunBot Ranked",
+	});
 
 	const bronzeEmojiCreate = interaction.guild?.emojis.create({
 		attachment: "./assets/bronze.webp",
@@ -74,6 +79,11 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 	const diamondEmojiCreate = interaction.guild?.emojis.create({
 		attachment: "./assets/diamond.webp",
 		name: "diamond",
+		reason: "ShadowrunBot Ranked",
+	});
+	const obsidianEmojiCreate = interaction.guild?.emojis.create({
+		attachment: "./assets/obsidian.webp",
+		name: "obsidian",
 		reason: "ShadowrunBot Ranked",
 	});
 
@@ -118,11 +128,13 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 		goldEmojiCreate as Promise<GuildEmoji>,
 		platinumEmojiCreate as Promise<GuildEmoji>,
 		diamondEmojiCreate as Promise<GuildEmoji>,
+		obsidianEmojiCreate as Promise<GuildEmoji>,
 		bronzeRoleCreate as Promise<Role>,
 		silverRoleCreate as Promise<Role>,
 		goldRoleCreate as Promise<Role>,
 		platinumRoleCreate as Promise<Role>,
 		diamondRoleCreate as Promise<Role>,
+		obsidianRoleCreate as Promise<Role>,
 		lobbyCreate,
 		lobbyExtractionCreate,
 		lobbyAttritionCreate,
@@ -147,21 +159,25 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 				goldEmojiId: results[5].id,
 				platinumEmojiId: results[6].id,
 				diamondEmojiId: results[7].id,
-				bronzeRoleId: results[8].id,
-				silverRoleId: results[9].id,
-				goldRoleId: results[10].id,
-				platinumRoleId: results[11].id,
-				diamondRoleId: results[12].id,
+				obsidianEmojiId: results[8].id,
+				bronzeRoleId: results[9].id,
+				silverRoleId: results[10].id,
+				goldRoleId: results[11].id,
+				platinumRoleId: results[12].id,
+				diamondRoleId: results[13].id,
+				obsidianRoleId: results[14].id,
 				bronzeMin: 0,
-				bronzeMax: 799,
-				silverMin: 800,
-				silverMax: 1099,
-				goldMin: 1100,
-				goldMax: 1299,
-				platinumMin: 1300,
-				platinumMax: 1499,
-				diamondMin: 1500,
-				diamondMax: 3000,
+				bronzeMax: 899,
+				silverMin: 900,
+				silverMax: 1199,
+				goldMin: 1200,
+				goldMax: 1499,
+				platinumMin: 1500,
+				platinumMax: 1899,
+				diamondMin: 1900,
+				diamondMax: 2299,
+				obsidianMin: 2300,
+				obsidianMax: 3500,
 			}).save();
 			await interaction.reply({
 				content: `Ranked Category was created. Ranked emojis were created. Ranked roles were created.`,

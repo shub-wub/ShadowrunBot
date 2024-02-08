@@ -160,11 +160,13 @@ export interface IGuild extends mongoose.Document {
     goldEmojiId: string,
     platinumEmojiId: string,
     diamondEmojiId: string,
+    obsidianEmojiId: string,
     bronzeRoleId: string,
     silverRoleId: string,
     goldRoleId: string,
     platinumRoleId: string,
     diamondRoleId: string,
+    obsidianRoleId: string,
     bronzeMin: number,
     bronzeMax: number,
     silverMin: number,
@@ -174,5 +176,7 @@ export interface IGuild extends mongoose.Document {
     platinumMin: number,
     platinumMax: number,
     diamondMin: number,
-    diamondMax: number
+    diamondMax: number,
+    obsidianMin: number,
+    obsidianMax: number
 }

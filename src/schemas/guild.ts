@@ -13,11 +13,13 @@ const guildSchema = new Schema<IGuild>({
     goldEmojiId: { type : String , unique : true, required : true },
     platinumEmojiId: { type : String , unique : true, required : true },
     diamondEmojiId: { type : String , unique : true, required : true },
+    obsidianEmojiId: { type : String , unique : true, required : true },
     bronzeRoleId: { type : String , unique : true, required : true },
     silverRoleId: { type : String , unique : true, required : true },
     goldRoleId: { type : String , unique : true, required : true },
     platinumRoleId: { type : String , unique : true, required : true },
     diamondRoleId: { type : String , unique : true, required : true },
+    obsidianRoleId: { type : String , unique : true, required : true },
     bronzeMin: Number,
     bronzeMax: Number,
     silverMin: Number,
@@ -28,6 +30,8 @@ const guildSchema = new Schema<IGuild>({
     platinumMax: Number,
     diamondMin: Number,
     diamondMax: Number,
+    obsidianMin: Number,
+    obsidianMax: Number,
 })
 
 export default model("guild", guildSchema, "guilds");

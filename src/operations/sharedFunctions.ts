@@ -14,6 +14,8 @@ export const getRankEmoji = (player: IPlayer, guild: IGuild): String => {
         emoji = `<:platinum:${guild.platinumEmojiId}>`;
     } else if (player.rating <= guild.diamondMax) {
         emoji = `<:diamond:${guild.diamondEmojiId}>`;
+    } else if (player.rating <= guild.obsidianMax) {
+        emoji = `<:obsidian:${guild.obsidianEmojiId}>`;
     }
     return emoji;
 }
@@ -30,6 +32,8 @@ export const getRankRole = (player: IPlayer, guild: IGuild): String => {
         role = guild.platinumRoleId;
     } else if (player.rating <= guild.diamondMax) {
         role = guild.diamondRoleId;
+    } else if (player.rating <= guild.obsidianMax) {
+        role = guild.obsidianRoleId;
     }
     return role;
 }

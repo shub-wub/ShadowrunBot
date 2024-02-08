@@ -294,7 +294,8 @@ export const updateRoles = async (interaction: ModalSubmitInteraction<CacheType>
 					role.id === guild.silverRoleId ||
 					role.id === guild.goldRoleId ||
 					role.id === guild.platinumRoleId ||
-					role.id === guild.diamondRoleId);
+					role.id === guild.diamondRoleId ||
+					role.id === guild.obsidianRoleId);
 				try {
 					// remove there current ranked roles
 					if (memberRoles.size > 0) {

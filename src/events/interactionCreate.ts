@@ -15,14 +15,14 @@ const event: BotEvent = {
                 return;
             }
             if (command.cooldown && cooldown) {
-                // if (Date.now() < cooldown) {
-                //     await interaction.reply({
-                //         content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this command again.`,
-                //         ephemeral: true
-                //     });
-                //     setTimeout(() => interaction.deleteReply(), 5000);
-                //     return
-                // }
+                if (Date.now() < cooldown) {
+                    await interaction.reply({
+                        content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this command again.`,
+                        ephemeral: true
+                    });
+                    setTimeout(() => interaction.deleteReply(), 5000);
+                    return
+                }
                 cooldowns.set(`${commandName}-${type}-${user.username}`, Date.now() + command.cooldown * 1000);
                 setTimeout(() => {
                     cooldowns.delete(`${commandName}-${type}-${user.username}`)
@@ -51,15 +51,15 @@ const event: BotEvent = {
                 return;
             }
             if (button.cooldown && cooldown) {
-                // if (Date.now() < cooldown) {
-                //     await interaction.reply({
-                //         content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this button again.`,
-                //         ephemeral: true
-                //     });
-                //     setTimeout(() => interaction.deleteReply(), 5000);
-                //     return
-                // }
-                //cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
+                if (Date.now() < cooldown) {
+                    await interaction.reply({
+                        content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this button again.`,
+                        ephemeral: true
+                    });
+                    setTimeout(() => interaction.deleteReply(), 5000);
+                    return
+                }
+                cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + button.cooldown * 1000);
                 cooldowns.set(`${customId}-${type}`, Date.now() + button.cooldown * 1000);
                 setTimeout(() => {
                     //cooldowns.delete(`${customId}-${type}-${user.username}`)
@@ -86,14 +86,14 @@ const event: BotEvent = {
                 return;
             }
             if (menu.cooldown && cooldown) {
-                // if (Date.now() < cooldown) {
-                //     await interaction.reply({
-                //         content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this menu again.`,
-                //         ephemeral: true
-                //     });
-                //     setTimeout(() => interaction.deleteReply(), 5000);
-                //     return
-                // }
+                if (Date.now() < cooldown) {
+                    await interaction.reply({
+                        content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this menu again.`,
+                        ephemeral: true
+                    });
+                    setTimeout(() => interaction.deleteReply(), 5000);
+                    return
+                }
                 cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + menu.cooldown * 1000);
                 setTimeout(() => {
                     cooldowns.delete(`${customId}-${type}-${user.username}`)
@@ -118,14 +118,14 @@ const event: BotEvent = {
                 return;
             }
             if (modal.cooldown && cooldown) {
-                // if (Date.now() < cooldown) {
-                //     await interaction.reply({
-                //         content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this modal again.`,
-                //         ephemeral: true
-                //     });
-                //     setTimeout(() => interaction.deleteReply(), 5000);
-                //     return
-                // }
+                if (Date.now() < cooldown) {
+                    await interaction.reply({
+                        content: `You have to wait ${Math.floor(Math.abs(Date.now() - cooldown) / 1000)} second(s) to use this modal again.`,
+                        ephemeral: true
+                    });
+                    setTimeout(() => interaction.deleteReply(), 5000);
+                    return
+                }
                 cooldowns.set(`${customId}-${type}-${user.username}`, Date.now() + modal.cooldown * 1000);
                 setTimeout(() => {
                     cooldowns.delete(`${customId}-${type}-${user.username}`)

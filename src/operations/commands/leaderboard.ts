@@ -46,6 +46,24 @@ export const createLeaderboardEmbed = async (
     } else if (device == "pc") {
         var names = "";
         var ratings = "";
+        var winlossratio = "";
+        for (let i = 0; i < pagePlayers.length; i++) {
+            const playerPlace = i + 1 + (playersPerPage * (pageNumber - 1));
+
+            var wlr = pagePlayers[i].wins / (pagePlayers[i].wins + pagePlayers[i].losses);
+            var emoji = getRankEmoji(pagePlayers[i], guildRecord);
+
+            wlr = Math.round(wlr * 100) / 100;
+            names += `**${playerPlace}.** <@${pagePlayers[i].discordId}>\n`;
+            ratings += `${emoji}${pagePlayers[i].rating}\n`;
+            winlossratio += `${wlr}\n`;
+        }
+        fields.push({name: "Name", value: names, inline: true});
+        fields.push({name: "Rating", value: ratings, inline: true});
+        fields.push({name: "W/L Ratio", value: winlossratio, inline: true});
+
+    } else if (device == "pc2") {
+        var names = "";
 		var gamesPlayed = "";
         var winlossratio = "";
         for (let i = 0; i < pagePlayers.length; i++) {
@@ -57,13 +75,11 @@ export const createLeaderboardEmbed = async (
 
             wlr = Math.round(wlr * 100) / 100;
             names += `**${playerPlace}.** <@${pagePlayers[i].discordId}>\n`;
-            ratings += `${emoji}${pagePlayers[i].rating}\n`;
             gamesPlayed += `${gamesNumber}\n`;
             winlossratio += `${wlr}\n`;
         }
         fields.push({name: "Name", value: names, inline: true});
-        fields.push({name: "Rating", value: ratings, inline: true});
-        fields.push({name: "Games Played", value: gamesPlayed, inline: true});
+        fields.push({name: "Maps Played", value: gamesPlayed, inline: true});
         fields.push({name: "W/L Ratio", value: winlossratio, inline: true});
 
     }

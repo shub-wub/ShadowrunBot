@@ -10,7 +10,7 @@ const button: Button = {
         console.log(currentTime + " " + interaction.user.username + " pushed previous");
         pageButton(interaction, "previous");
     },
-    cooldown: 2
+    cooldown: 1
 }
 
 export default button;

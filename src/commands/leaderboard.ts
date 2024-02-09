@@ -15,11 +15,18 @@ const command: SlashCommand = {
 		),
 	execute: async (interaction: CommandInteraction, client: Client) => {
 		// Retrieve the players from the database and sort by rating
-		const currentDate = new Date();
-		const cutoffDate = new Date().setDate(currentDate.getDate() - 21);
-		const players = await Player.find({lastMatchDate: {$gte: cutoffDate}}).sort("-rating");
-		const playersPerPage = 25;
+		const cutoffDate = new Date();
+		cutoffDate.setDate(cutoffDate.getDate() - 21);
 		var device: string = (interaction.options as any).getString("device");
+		const sortOption = {} as any;
+		device == "pc2" ? sortOption['mapsPlayed'] = -1 : sortOption['rating'] = -1;
+
+		const players = await Player.aggregate([
+			{$match: {lastMatchDate: {$gte: cutoffDate}}},
+			{$addFields: {"mapsPlayed": {$add: ["$wins", "$losses"]}}},
+			{$sort: sortOption}
+		]);
+		const playersPerPage = 25;
 		await leaderboard(
 			interaction,
 			client,

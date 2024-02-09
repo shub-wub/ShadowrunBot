@@ -84,7 +84,7 @@ export const createLeaderboardEmbed = async (
 
     }
     const embed: any = new EmbedBuilder()
-        .setTitle('__**ELO Leaderboard**__')
+        .setTitle(device == "pc2" ? "__**Maps Played Leaderboard**__" : "__**ELO Leaderboard**__")
         .setColor(getThemeColor("embed"))
         .setFooter({ text: `Page ${pageNumber} of ${Math.ceil(players.length / playersPerPage)}` })
         .addFields(fields);

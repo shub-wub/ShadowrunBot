@@ -2,10 +2,9 @@ import { ButtonInteraction, GuildMember, PermissionsBitField } from "discord.js"
 import { IGuild, IPlayer, IQueuePlayer } from "../types";
 import QueuePlayer from "#schemas/queuePlayer";
 
-let newPlayer;
+let newPlayers: Array<IPlayer> = [];;
 let newPlayerPresent = false;
 let oldPlayers: Array<IPlayer> = [];
-
 
 export const getRankEmoji = (player: IPlayer, guild: IGuild): String => {
     var emoji = "";
@@ -67,9 +66,9 @@ export const generateTeams = (playersInput: IPlayer[]): [IPlayer[], IPlayer[]] =
     for (let i = 0; i < playersInput.length; i++) {
         if (playersInput[i].wins + playersInput[i].losses <= 10) {
             newPlayerPresent = true;
-            newPlayer = playersInput[i];
+            newPlayers.push(playersInput[i]);
         } else {
-            oldPlayers.push[playersInput[i]];
+            oldPlayers.push(playersInput[i]);
         }
     }
 
@@ -117,7 +116,7 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
 
     // Change elo adjustments based on a new player being present
     if (newPlayerPresent == true) {
-
+        
     }
 
     // if the favorite won both teams take less impact

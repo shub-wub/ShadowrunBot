@@ -228,7 +228,7 @@ export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[
     fields.push({ name: `Team 1 - (${team1Total})`, value: team1, inline: true });
     fields.push({ name: `Team 2 - (${team2Total})`, value: team2, inline: true });
     const embed: any = new EmbedBuilder()
-        .setTitle(`${queue.rankMin}-${queue.rankMax} Match (x${queue.multiplier})`)
+        .setTitle(`${queue.rankMin}-${queue.rankMax} Match (${queue.multiplier}x)`)
         .setColor(getThemeColor("embed"))
         .addFields(fields);
     return embed;

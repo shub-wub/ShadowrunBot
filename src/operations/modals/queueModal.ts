@@ -68,7 +68,7 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
     }
 
     const newEmbed = new EmbedBuilder()
-        .setTitle(`${min}-${max} Queue (${queueMultiplierFieldValue} Multiplier)`)
+        .setTitle(`${min}-${max} Queue (${queueMultiplierFieldValue}x Multiplier)`)
         .setColor(getThemeColor("embed"))
         .addFields([
             {

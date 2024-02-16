@@ -104,7 +104,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        //await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
                 if (queuePlayers.length >= 13) {
@@ -223,12 +223,11 @@ export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[
         team2Total += team2Players[i].rating;
         team2 += `<@${team2Players[i].discordId}> ${emoji}${team2Players[i].rating}\n`;
     }
-    fields.push({ name: `Team that picks side or server first:`, value: `${randomTeam}`, inline: false });
     fields.push({ name: `Maps:`, value: `${maps[0].name}\n${maps[1].name}\n${maps[2].name}`, inline: false });
     fields.push({ name: `Team 1 - (${team1Total})`, value: team1, inline: true });
     fields.push({ name: `Team 2 - (${team2Total})`, value: team2, inline: true });
     const embed: any = new EmbedBuilder()
-        .setTitle(`${queue.rankMin}-${queue.rankMax} Match (${queue.multiplier}x)`)
+        .setTitle(`${queue.rankMin}-${queue.rankMax} Match (${queue.multiplier}x)\nTeam ${randomTeam} picks side or server first`)
         .setColor(getThemeColor("embed"))
         .addFields(fields);
     return embed;

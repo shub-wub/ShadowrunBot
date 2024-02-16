@@ -104,7 +104,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        //await user.send(`Hello, your match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
                 if (queuePlayers.length >= 13) {
@@ -142,7 +142,7 @@ export const launchMatch = async (interaction: ButtonInteraction, client: Client
             if (!guild) return;
 
             if (queuePlayersTop8.length >= 8) {
-                await createMatch(interaction, client, queuePlayersTop8);
+                await createMatch(interaction, client, queuePlayersTop8, queue as IQueue);
 
                 await removeNewMatchPlayersFromOtherQueues(interaction, queuePlayersTop8);
 
@@ -206,11 +206,12 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, overri
         });
 }
 
-export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[], guildRecord: IGuild, maps: IMap[]): any => {
+export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[], guildRecord: IGuild, maps: IMap[], queue: IQueue): any => {
     var team1 = "";
     var team2 = "";
     var team1Total = 0;
     var team2Total = 0;
+    var randomTeam = Math.floor(Math.random() * 2) + 1;
     var fields: Field[] = [];
     for (let i = 0; i < team1Players.length; i++) {
         var emoji = getRankEmoji(team1Players[i], guildRecord);
@@ -222,12 +223,12 @@ export const createMatchEmbed = (team1Players: IPlayer[], team2Players: IPlayer[
         team2Total += team2Players[i].rating;
         team2 += `<@${team2Players[i].discordId}> ${emoji}${team2Players[i].rating}\n`;
     }
+    fields.push({ name: `Team that picks side or server first:`, value: `${randomTeam}`, inline: false });
     fields.push({ name: `Maps:`, value: `${maps[0].name}\n${maps[1].name}\n${maps[2].name}`, inline: false });
     fields.push({ name: `Team 1 - (${team1Total})`, value: team1, inline: true });
     fields.push({ name: `Team 2 - (${team2Total})`, value: team2, inline: true });
-    var randomTeam = Math.floor(Math.random() * 2) + 1;
     const embed: any = new EmbedBuilder()
-        .setTitle(`Team ${randomTeam} picks server and side first`)
+        .setTitle(`${queue.rankMin}-${queue.rankMax} Match (x${queue.multiplier})`)
         .setColor(getThemeColor("embed"))
         .addFields(fields);
     return embed;
@@ -274,7 +275,7 @@ export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): Ac
     return buttonRow;
 };
 
-export const createMatch = async (interaction: ButtonInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[]): Promise<void> => {
+export const createMatch = async (interaction: ButtonInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[], queue: IQueue): Promise<void> => {
     const playersQuery = Player.find({ discordId: { $in: queuePlayers.map(qp => qp.discordId) } });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const mapQueryG1 = Map.find<IMap>({ gameType: "Attrition" });
@@ -345,7 +346,7 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
     }
 
         var teams = generateTeams(players);
-        const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, maps);
+        const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, maps, queue);
         const buttonRow1 = createMatchButtonRow1(false, true, true);
         const buttonRow2 = createMatchButtonRow2(false, true, true);
 

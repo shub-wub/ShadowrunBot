@@ -30,7 +30,15 @@ export const openQueueModal = (interaction: CommandInteraction<CacheType>): void
                 new TextInputBuilder()
                     .setCustomId("hidePlayerNames")
                     .setLabel("Hide player names? (yes/no)")
-                    .setValue("yes")
+                    .setValue("no")
+                    .setRequired(true)
+                    .setStyle(TextInputStyle.Short),
+            ]),
+            new ActionRowBuilder<TextInputBuilder>().addComponents([
+                new TextInputBuilder()
+                    .setCustomId("queueMultiplier")
+                    .setLabel("Queue Multiplier (Default is 1.0)")
+                    .setValue("1.0")
                     .setRequired(true)
                     .setStyle(TextInputStyle.Short),
             ]),
@@ -43,15 +51,24 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
     var max = interaction.fields.getTextInputValue("maxRank");
     var hidePlayerNamesfieldValue = interaction.fields.getTextInputValue("hidePlayerNames");
     var hidePlayerNames = true;
+    var queueMultiplierFieldValue = interaction.fields.getTextInputValue("queueMultiplier");
+    var queueMultiplier = 1.0;
 
     if (hidePlayerNamesfieldValue.toLocaleLowerCase() == "yes") {
         hidePlayerNames = true;
     } else {
         hidePlayerNames = false;
     }
+    console.log("Value put in", queueMultiplierFieldValue);
+    try {
+        queueMultiplier = parseFloat(queueMultiplierFieldValue);
+    } catch(error) {
+        console.log("Input for Queue Multiplier is not a Number value. Not creating Queue.");
+        return;
+    }
 
     const newEmbed = new EmbedBuilder()
-        .setTitle(`${min}-${max} Queue`)
+        .setTitle(`${min}-${max} Queue (${queueMultiplierFieldValue} Multiplier)`)
         .setColor(getThemeColor("embed"))
         .addFields([
             {
@@ -92,7 +109,8 @@ export const submitQueueModal = async (interaction: ModalSubmitInteraction<Cache
                 messageId: message.id,
                 rankMin: min,
                 rankMax: max,
-                hidePlayerNames: hidePlayerNames
+                hidePlayerNames: hidePlayerNames,
+                multiplier: queueMultiplier
             }).save();
         } catch (error) {
             mongoError(error as MongooseError);

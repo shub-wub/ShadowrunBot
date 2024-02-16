@@ -49,6 +49,9 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 		var guild = queryResults[2] as IGuild;
 		var team1 = queryResults[1].filter(player => player.team == 1);
 		var team2 = queryResults[1].filter(player => player.team == 2);
+		const queueMessageId = team1[0].messageId
+		const queue = await Queue.findOne<IQueue>({messageId: queueMessageId});
+		const queueMultiplier = queue?.multiplier ? queue.multiplier : 1.0;
 		var team1Players: IPlayer[] = (await Promise.all(team1.map(async (qp) => {
 			return await Player.find<IPlayer>({ discordId: qp.discordId });
 		}))).flat();
@@ -106,7 +109,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 					match.team1ReportedT1G2Rounds == match.team2ReportedT1G2Rounds &&
 					(match.team1ReportedT1G1Rounds == 6 && match.team1ReportedT1G2Rounds == 6 ||
 						match.team1ReportedT2G1Rounds == 6 && match.team1ReportedT2G2Rounds == 6)) {
-					finalizeMatch(interaction, client, team1Players, team2Players, guild, match);
+					finalizeMatch(interaction, client, team1Players, team2Players, guild, match, queueMultiplier);
 				} else {
 					await interaction.deferUpdate().catch(error => {
 						console.log(error);
@@ -123,7 +126,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 				}
 				if ((match.team1ReportedT1G3Rounds > 0 || match.team1ReportedT2G3Rounds > 0) &&
 					(match.team2ReportedT1G3Rounds > 0 || match.team2ReportedT2G3Rounds > 0)) {
-					finalizeMatch(interaction, client, team1Players, team2Players, guild, match);
+					finalizeMatch(interaction, client, team1Players, team2Players, guild, match, queueMultiplier);
 				} else {
 					match.save();
 					await interaction.deferUpdate().catch(error => {
@@ -135,7 +138,7 @@ export const submitScoreModal = async (interaction: ModalSubmitInteraction<Cache
 	});
 }
 
-export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, team1Players: IPlayer[], team2Players: IPlayer[], guild: IGuild, match: IMatch): Promise<void> => {
+export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheType>, client: Client, team1Players: IPlayer[], team2Players: IPlayer[], guild: IGuild, match: IMatch, queueMultiplier: number): Promise<void> => {
 	// if both teams scores match for all rounds
 	if (match.team1ReportedT1G1Rounds == match.team2ReportedT1G1Rounds &&
 		match.team1ReportedT1G2Rounds == match.team2ReportedT1G2Rounds &&
@@ -149,31 +152,31 @@ export const finalizeMatch = async (interaction: ModalSubmitInteraction<CacheTyp
 
 		// score game 1
 		if (match.team1ReportedT1G1Rounds == 6) {
-			calculateTeamElo(team1Players, team2Players, match.team1ReportedT1G1Rounds, match.team1ReportedT2G1Rounds);
+			calculateTeamElo(team1Players, team2Players, match.team1ReportedT1G1Rounds, match.team1ReportedT2G1Rounds, queueMultiplier);
 			match.map1 = `${match.map1} - Team 1 (${match.team1ReportedT1G1Rounds}-${match.team1ReportedT2G1Rounds})`;
 			match.map1Winner = "Team 1";
 		} else if (match.team1ReportedT2G1Rounds == 6) {
-			calculateTeamElo(team2Players, team1Players, match.team1ReportedT1G1Rounds, match.team1ReportedT2G1Rounds);
+			calculateTeamElo(team2Players, team1Players, match.team1ReportedT1G1Rounds, match.team1ReportedT2G1Rounds, queueMultiplier);
 			match.map1 = `${match.map1} - Team 2 (${match.team1ReportedT2G1Rounds}-${match.team1ReportedT1G1Rounds})`;
 			match.map1Winner = "Team 2";
 		}
 		// score game 2
 		if (match.team1ReportedT1G2Rounds == 6) {
-			calculateTeamElo(team1Players, team2Players, match.team1ReportedT1G2Rounds, match.team1ReportedT2G2Rounds);
+			calculateTeamElo(team1Players, team2Players, match.team1ReportedT1G2Rounds, match.team1ReportedT2G2Rounds, queueMultiplier);
 			match.map2 = `${match.map2} - Team 1 (${match.team1ReportedT1G2Rounds}-${match.team1ReportedT2G2Rounds})`;
 			match.map2Winner = "Team 1";
 		} else if (match.team1ReportedT2G2Rounds == 6) {
-			calculateTeamElo(team2Players, team1Players, match.team1ReportedT1G2Rounds, match.team1ReportedT2G2Rounds);
+			calculateTeamElo(team2Players, team1Players, match.team1ReportedT1G2Rounds, match.team1ReportedT2G2Rounds, queueMultiplier);
 			match.map2 = `${match.map2} - Team 2 (${match.team1ReportedT2G2Rounds}-${match.team1ReportedT1G2Rounds})`;
 			match.map2Winner = "Team 2";
 		}
 		// score game 3
 		if (match.team1ReportedT1G3Rounds == 6) {
-			calculateTeamElo(team1Players, team2Players, match.team1ReportedT1G3Rounds, match.team1ReportedT2G3Rounds);
+			calculateTeamElo(team1Players, team2Players, match.team1ReportedT1G3Rounds, match.team1ReportedT2G3Rounds, queueMultiplier);
 			match.map3 = `${match.map3} - Team 1 (${match.team1ReportedT1G3Rounds}-${match.team1ReportedT2G3Rounds})`;
 			match.map3Winner = "Team 1";
 		} else if (match.team1ReportedT2G3Rounds == 6) {
-			calculateTeamElo(team2Players, team1Players, match.team1ReportedT1G3Rounds, match.team1ReportedT2G3Rounds);
+			calculateTeamElo(team2Players, team1Players, match.team1ReportedT1G3Rounds, match.team1ReportedT2G3Rounds, queueMultiplier);
 			match.map3 = `${match.map3} - Team 2 (${match.team1ReportedT2G3Rounds}-${match.team1ReportedT1G3Rounds})`;
 			match.map3Winner = "Team 2";
 		}

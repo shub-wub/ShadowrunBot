@@ -104,7 +104,8 @@ export interface IQueue extends mongoose.Document {
     messageId: string,
     rankMin: number,
     rankMax: number,
-    hidePlayerNames: boolean
+    hidePlayerNames: boolean,
+    multiplier: number
 }
 
 export interface IMatch extends mongoose.Document {

@@ -68,7 +68,7 @@ export const teamRankingDifference = (team1: IPlayer[], team2: IPlayer[]): numbe
     return Math.abs(team1Ranking - team2Ranking);
 }
 
-export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], team1Rounds: number, team2Rounds: number): any => {
+export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], team1Rounds: number, team2Rounds: number, queueMultiplier: number): any => {
     const currentDate = new Date();
     let winningTeamRating = 0;
     let losingTeamRating = 0;
@@ -119,7 +119,7 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
         let winLossRatio = player.wins / (player.wins + player.losses);
         let k = 23 * (winLossRatio + roundAdjustment + winningTeamDifferenceAdjustment + 1);
         let expectedScore = 1 / (1 + Math.pow(10, (losingTeamRating/losingTeam.length - player.rating) / 5000));
-        player.rating = player.rating + k * (1 - expectedScore);
+        player.rating = player.rating + ((k * (1 - expectedScore)) * queueMultiplier);
         player.rating = Math.round(player.rating);
     });
 
@@ -130,7 +130,7 @@ export const calculateTeamElo = (winningTeam: IPlayer[], losingTeam: IPlayer[], 
         let winLossRatio = player.wins / (player.wins + player.losses);
         let k = 21 * ((1 - winLossRatio) + roundAdjustment + losingTeamDifferenceAdjustment + 1);
         let expectedScore = 1 / (1 + Math.pow(10, (winningTeamRating/winningTeam.length - player.rating) / 5000));
-        player.rating = player.rating + k * (0 - expectedScore);
+        player.rating = player.rating + ((k * (0 - expectedScore)) * queueMultiplier);
         player.rating = Math.round(player.rating);
     });
 }

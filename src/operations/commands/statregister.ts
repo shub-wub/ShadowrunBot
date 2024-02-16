@@ -25,7 +25,7 @@ export const statRegister = async (
 	try {
 		await new Player({
 			discordId: discordId,
-			rating: 900,
+			rating: 800,
 			wins: 0,
 			losses: 0,
 			kills: 0,

@@ -1,3 +1,4 @@
+export * from "./modals/clearQueuesModal.js"
 export * from "./modals/queueModal.js";
 export * from "./modals/scoreModal.js";
 export * from "./commands/srinitialize.js";

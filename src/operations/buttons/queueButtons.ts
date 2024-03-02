@@ -1,5 +1,5 @@
 import { getThemeColor, mongoError } from "#utilities";
-import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, GuildMember, PermissionsBitField, } from "discord.js";
+import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, GuildMember, PermissionsBitField, ModalSubmitInteraction, } from "discord.js";
 import QueuePlayer from "#schemas/queuePlayer";
 import Player from "#schemas/player";
 import Guild from "#schemas/guild";
@@ -179,8 +179,12 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, overri
             var otherPlayersInQueue = queryResults[3];
             if (!queryResults[1]) return;
             if (queryResults[0].length == 0) {
+                var outputMessage = `You are not in the queue so you cannot remove yourself.`;
+                if (overridePlayer) {
+                    outputMessage = 'Player not found in the queue so cannot remove them.';
+                }
                 await interaction.reply({
-                    content: `You are not in the queue so you cannot remove yourself.`,
+                    content: outputMessage,
                     ephemeral: true
                 });
                 return;
@@ -401,7 +405,7 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
     });
 }
 
-export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, queuePlayers: string, queueCount: number, isInLaunchState: boolean, deferred: boolean): Promise<void> => {
+export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType> | ModalSubmitInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, queuePlayers: string, queueCount: number, isInLaunchState: boolean, deferred: boolean): Promise<void> => {
     if (!queuePlayers) queuePlayers = "\u200b";
     var currentTime = new Date();
     const minutesToReady = 5;
@@ -460,13 +464,15 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
     });
     if (!deferred) {
         deferred = true;
-        await interaction.deferUpdate().catch(error => {
-            console.log(error);
-        });
+        if (interaction instanceof ButtonInteraction) {
+            await interaction.deferUpdate().catch(error => {
+                console.log(error);
+            });
+        }
     }
 }
 
-export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, updatedQueuePlayers: IQueuePlayer[], guild: IGuild, queue: IQueue, deferred: boolean): Promise<void> => {
+export const rebuildQueue = async (interaction: ButtonInteraction<CacheType> | ModalSubmitInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, updatedQueuePlayers: IQueuePlayer[], guild: IGuild, queue: IQueue, deferred: boolean): Promise<void> => {
     var queueCount = Number(updatedQueuePlayers.length);
     var isInLaunchState = false;
     var hidePlayerNames = queue.hidePlayerNames;

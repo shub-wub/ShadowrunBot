@@ -1,6 +1,9 @@
-import { ButtonInteraction, GuildMember, PermissionsBitField } from "discord.js";
-import { IGuild, IPlayer, IQueuePlayer } from "../types";
+import { ButtonInteraction, CommandInteraction, ModalSubmitInteraction, EmbedBuilder, GuildMember, TextChannel } from "discord.js";
+import { IGuild, IPlayer, IQueue, IQueuePlayer } from "../types";
+import Guild from "#schemas/guild";
+import Queue from "#schemas/queue";
 import QueuePlayer from "#schemas/queuePlayer";
+import { updateQueuePositions, rebuildQueue } from "./buttons/queueButtons";
 
 export const getRankEmoji = (player: IPlayer, guild: IGuild): String => {
     var emoji = "";
@@ -159,9 +162,33 @@ export const getQueuePlayersAsText = async (interaction: ButtonInteraction, queu
     return text;
 }
 
-export const isGmOrBetter = async (interaction: ButtonInteraction): Promise<boolean> => {
+export const isGmOrBetter = async (interaction: ButtonInteraction | CommandInteraction): Promise<boolean> => {
     var guildUser = await interaction.guild?.members.fetch(interaction.user.id);
 
     return guildUser?.roles.cache.some(r => r.name.toLocaleLowerCase() === 'gm' || r.name.toLocaleLowerCase() === 'moderator' || r.name.toLocaleLowerCase() === 'admin') as boolean;
     //const isAdmin = guildUser?.permissions.has(PermissionsBitField.Flags.Administrator);
+}
+
+export const refreshQueue = async (interaction: ButtonInteraction | ModalSubmitInteraction, queueMessageId: string) => {
+    const queueQuery = Queue.findOne<IQueue>().and([{messageId: queueMessageId}]);
+    const queuePlayersNotInMatchesQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: queueMessageId }, { matchMessageId: { $exists: false } }]).sort({ queuePosition: 1 });
+    const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
+
+    await Promise.all([queuePlayersNotInMatchesQuery, guildQuery, queueQuery])
+        .then(async (queryResults: [IQueuePlayer[], IGuild | null, IQueue | null]) => {
+            if (!queryResults[1]) return;
+            if (!queryResults[2]) return;
+            const queuePlayers = queryResults[0];
+            const guild = queryResults[1];
+            const queue = queryResults[2];
+            const queueMessage = await (interaction.client?.channels?.cache.get(guild.queueChannelId) as TextChannel).messages.fetch(queueMessageId)
+            const queueEmbed = EmbedBuilder.from(queueMessage.embeds[0]);
+
+            await updateQueuePositions(queuePlayers);
+
+            rebuildQueue(interaction, queueEmbed, queueMessage, queuePlayers, guild, queue as IQueue, false);
+        }).catch(async error => {
+            console.log(`There was an error refreshing the queue.`, error)
+            return;
+        });
 }

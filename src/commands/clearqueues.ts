@@ -2,7 +2,7 @@
 import { Client, CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { SlashCommand } from "../types";
 import { isGmOrBetter } from "#operations";
-import { openClearQueuesModal } from "src/operations/modals/clearQueuesModal";
+import { openClearQueuesModal } from "#operations";
 
 const command: SlashCommand = {
 	data: new SlashCommandBuilder()

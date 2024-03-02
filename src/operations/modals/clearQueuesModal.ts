@@ -37,7 +37,7 @@ export const submitClearQueuesModal = async (interaction: ModalSubmitInteraction
     }
 
     const guildRecord = await Guild.findOne<IGuild>({ guildId: interaction.guildId });
-    const uniqueQueueMessageIds = await QueuePlayer.distinct('messageId', [{matchMessageId: {$exists: false}}]);
+    const uniqueQueueMessageIds = await QueuePlayer.distinct('messageId', {matchMessageId: {$exists: false}});
     if (guildRecord) {        
         try {
             await QueuePlayer.deleteMany({ matchMessageId: {$exists: false} });

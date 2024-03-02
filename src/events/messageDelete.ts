@@ -15,8 +15,9 @@ const event: BotEvent = {
         var guildRecord = await Guild.findOne<IGuild>({
             guildId: message.guildId,
         });
+        const currentTime = new Date(Date.now()).toLocaleString();
         if (message.channelId === guildRecord?.leaderboardChannelId) {
-            console.log("Message delete from leaderboard.id" + message.channelId);
+            console.log(currentTime + " Message delete from leaderboard channel" + message.id);
             const leaderboardQuery = Leaderboard.findOne<ILeaderboard>().and([{ messageId: message.id }]);
             try {
                 await Leaderboard.deleteOne(leaderboardQuery);
@@ -28,7 +29,7 @@ const event: BotEvent = {
                 });
             }
         } else if (message.channelId === guildRecord?.queueChannelId) {
-            console.log("Message delete from queue.id" + message.channelId);
+            console.log(currentTime + " Message delete from ranked channel" + message.id);
             const queueQuery = await Queue.findOne<IQueue>().and([{ messageId: message.id }]);
             const queueMessageId = queueQuery?.messageId;
             const queuePlayersQuery = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: queueMessageId, matchMessageId: { $exists: false } }]);
@@ -48,12 +49,12 @@ const event: BotEvent = {
             } catch (error) {
                 mongoError(error as MongooseError);
                 await message.reply({
-                    content: `There was an error deleting the plaayers from the queueplayers in the database.`,
+                    content: `There was an error deleting the players from the queueplayers in the database.`,
                     ephemeral: true
                 });
             }
         } else if (message.channelId === guildRecord?.matchChannelId) {
-            console.log("Message delete from match.id" + message.channelId);
+            console.log(currentTime + " Message delete from matches channel" + message.id);
             const matchQuery = await Match.findOne<IMatch>().and([{ messageId: message.id, matchWinner: { $exists: false } }]);
             if (!matchQuery) return;
             try {

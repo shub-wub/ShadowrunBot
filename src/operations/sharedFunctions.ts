@@ -181,10 +181,11 @@ export const refreshQueue = async (interaction: ButtonInteraction | ModalSubmitI
             const queuePlayers = queryResults[0];
             const guild = queryResults[1];
             const queue = queryResults[2];
+            await updateQueuePositions(queuePlayers);
             const queueMessage = await (interaction.client?.channels?.cache.get(guild.queueChannelId) as TextChannel).messages.fetch(queueMessageId)
+            if (!queueMessage) return;
             const queueEmbed = EmbedBuilder.from(queueMessage.embeds[0]);
 
-            await updateQueuePositions(queuePlayers);
 
             rebuildQueue(interaction, queueEmbed, queueMessage, queuePlayers, guild, queue as IQueue, false);
         }).catch(async error => {

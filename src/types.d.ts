@@ -146,7 +146,8 @@ export interface ILeaderboard extends mongoose.Document {
 export interface IMap extends mongoose.Document {
     name: string,
     gameType: string,
-    uniqueId: number
+    uniqueId: number,
+    mapPool: string
 }
 
 export interface IGuild extends mongoose.Document {

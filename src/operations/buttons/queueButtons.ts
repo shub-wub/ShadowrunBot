@@ -104,7 +104,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        // await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
                 if (queuePlayers.length >= 13) {
@@ -277,13 +277,15 @@ export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): Ac
 export const createMatch = async (interaction: ButtonInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[], queue: IQueue): Promise<void> => {
     const playersQuery = Player.find({ discordId: { $in: queuePlayers.map(qp => qp.discordId) } });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
-    const mapQueryG1 = Map.find<IMap>({ gameType: "Attrition" });
-    const mapQueryG2 = Map.find<IMap>({ gameType: "Extraction" });
+    //const mapQueryG1 = Map.find<IMap>({ gameType: "Attrition" });
+    //const mapQueryG2 = Map.find<IMap>({ gameType: "Extraction" });
     /* THIS CODE IS CURRENTLY UNUSED BUT MAY COME BACK
     // const mapQueryG3 = Map.find<IMap>({ $or: [{ gameType: "Attrition" }, { gameType: "AttritionG3" }] });
     */
-  await Promise.all([playersQuery, guildQuery, mapQueryG1, mapQueryG2])
-    .then(async (queryResults: [IPlayer[], IGuild | null, IMap[], IMap[]]) => {
+    const mapQueryA = Map.find<IMap>({gameType: "Attrition", mapPool: "A"})
+    const mapQueryB = Map.find<IMap>({gameType: "Attrition", mapPool: "B"})
+  await Promise.all([playersQuery, guildQuery, mapQueryA, mapQueryB])
+    .then(async (queryResults: [IPlayer[], IGuild | null, IMap[], any]) => {
       const players = queryResults[0];
       const guild = queryResults[1];
 
@@ -295,8 +297,10 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
         // const allAttritionMaps = queryResults[4];
         */
 
-      const attritionMaps = queryResults[2];
-      const extractionMaps = queryResults[3];
+    //   const attritionMaps = queryResults[2];
+    //   const extractionMaps = queryResults[3];
+      const mapPoolA = queryResults[2];
+      const mapPoolB = queryResults[3];
 
       if (players.length !== queuePlayers.length) {
         console.log("Not all players were found.");
@@ -314,35 +318,49 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
       var maps: IMap[] = [];
 
       // Create map selection with no duplicates
-      const chooseMap = (mapPool: IMap[]) => {
-      while (true) {
-        let uniqueMap = true;
-        const mapPoolIndex = Math.floor(Math.random() * mapPool.length);
-        for (i = 0; i < maps.length; i++) {
-          if (maps[i].uniqueId == mapPool[mapPoolIndex].uniqueId) {
-            uniqueMap = false;
-            break;
-          }
-        }
-        if (!uniqueMap) {
-          continue;
-        }
-        maps.push(mapPool[mapPoolIndex]);
-        break;
-      }
-    };
+    //   const chooseMap = (mapPool: IMap[]) => {
+    //   while (true) {
+    //     let uniqueMap = true;
+    //     const mapPoolIndex = Math.floor(Math.random() * mapPool.length);
+    //     for (i = 0; i < maps.length; i++) {
+    //       if (maps[i].uniqueId == mapPool[mapPoolIndex].uniqueId) {
+    //         uniqueMap = false;
+    //         break;
+    //       }
+    //     }
+    //     if (!uniqueMap) {
+    //       continue;
+    //     }
+    //     maps.push(mapPool[mapPoolIndex]);
+    //     break;
+    //   }
+    // };
 
     // Choose if Extraction is in the map selection
     // Numbers 0-2 mean Extraction for the corresponding map number
     // Anything above 2 means no Extraction
-    const extractionOrderNum = Math.floor(Math.random() * 5);
-      for (var i = 0; i < 3; i += 1) {
-        if (i == extractionOrderNum) {
-          chooseMap(extractionMaps);
-        } else {
-          chooseMap(attritionMaps);
+    // const extractionOrderNum = Math.floor(Math.random() * 5);
+    //   for (var i = 0; i < 3; i += 1) {
+    //     if (i == extractionOrderNum) {
+    //       chooseMap(extractionMaps);
+    //     } else {
+    //       chooseMap(attritionMaps);
+    //     }
+    // }
+        var mapChoiceIndexes: number[] = []
+        mapChoiceIndexes.push(Math.floor(Math.random() * mapPoolA.length));
+        mapChoiceIndexes.push(Math.floor(Math.random() * mapPoolA.length));
+        mapChoiceIndexes.push(Math.floor(Math.random() * mapPoolB.length));
+
+        maps.push(mapPoolA[mapChoiceIndexes[0]]);
+        if (mapChoiceIndexes[0] === mapChoiceIndexes[1]) {
+            maps.push(mapPoolB[mapChoiceIndexes[0]]);
+            maps.push(mapPoolA[mapChoiceIndexes[1]]);
         }
-    }
+        else {
+            maps.push(mapPoolA[mapChoiceIndexes[1]]);
+            maps.push(mapPoolB[mapChoiceIndexes[2]]);
+        }
 
         var teams = generateTeams(players);
         const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, maps, queue);

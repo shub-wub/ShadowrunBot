@@ -104,7 +104,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        // await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
                 if (queuePlayers.length >= 13) {

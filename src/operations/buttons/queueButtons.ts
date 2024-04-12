@@ -347,20 +347,17 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
     //       chooseMap(attritionMaps);
     //     }
     // }
-        var mapChoiceIndexes: number[] = []
-        mapChoiceIndexes.push(Math.floor(Math.random() * mapPoolA.length));
-        mapChoiceIndexes.push(Math.floor(Math.random() * mapPoolA.length));
-        mapChoiceIndexes.push(Math.floor(Math.random() * mapPoolB.length));
+        const mapPoolAChoice1 = Math.floor(Math.random() * mapPoolA.length);
+        var mapPoolAChoice2 = Math.floor(Math.random() * mapPoolA.length);
+        while (mapPoolAChoice1 == mapPoolAChoice2) {mapPoolAChoice2 = Math.floor(Math.random() * mapPoolA.length);}
+        const mapPoolBChoice = Math.floor(Math.random() * mapPoolB.length);
 
-        maps.push(mapPoolA[mapChoiceIndexes[0]]);
-        if (mapChoiceIndexes[0] === mapChoiceIndexes[1]) {
-            maps.push(mapPoolB[mapChoiceIndexes[0]]);
-            maps.push(mapPoolA[mapChoiceIndexes[1]]);
-        }
-        else {
-            maps.push(mapPoolA[mapChoiceIndexes[1]]);
-            maps.push(mapPoolB[mapChoiceIndexes[2]]);
-        }
+
+        const mapPoolBMatchCardLocation = mapPoolA[mapPoolAChoice1].uniqueId == mapPoolA[mapPoolAChoice2].uniqueId ?
+            1 : Math.floor(Math.random() * 3);
+        maps.push(mapPoolA[mapPoolAChoice1]);
+        maps.push(mapPoolA[mapPoolAChoice2]);
+        maps.splice(mapPoolBMatchCardLocation, 0, mapPoolB[mapPoolBChoice]);
 
         var teams = generateTeams(players);
         const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, maps, queue);

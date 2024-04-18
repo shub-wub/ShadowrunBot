@@ -1,4 +1,4 @@
-import { ButtonInteraction, GuildMember, PermissionsBitField } from "discord.js";
+import { ButtonInteraction, CommandInteraction, GuildMember, PermissionsBitField } from "discord.js";
 import { IGuild, IPlayer, IQueuePlayer } from "../types";
 import QueuePlayer from "#schemas/queuePlayer";
 
@@ -159,7 +159,7 @@ export const getQueuePlayersAsText = async (interaction: ButtonInteraction, queu
     return text;
 }
 
-export const isGmOrBetter = async (interaction: ButtonInteraction): Promise<boolean> => {
+export const isGmOrBetter = async (interaction: ButtonInteraction | CommandInteraction): Promise<boolean> => {
     var guildUser = await interaction.guild?.members.fetch(interaction.user.id);
 
     return guildUser?.roles.cache.some(r => r.name.toLocaleLowerCase() === 'gm' || r.name.toLocaleLowerCase() === 'moderator' || r.name.toLocaleLowerCase() === 'admin') as boolean;

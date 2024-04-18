@@ -1,5 +1,5 @@
 import { getThemeColor, mongoError } from "#utilities";
-import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, GuildMember, PermissionsBitField, } from "discord.js";
+import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, GuildMember, PermissionsBitField, CommandInteraction, } from "discord.js";
 import QueuePlayer from "#schemas/queuePlayer";
 import Player from "#schemas/player";
 import Guild from "#schemas/guild";
@@ -104,7 +104,7 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
                     if (uqp.queuePosition <= 8) {
                         var user = client.users.cache.get(uqp.discordId);
                         if (!user) continue;
-                        await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+                        //await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
                     }
                 }
                 if (queuePlayers.length >= 13) {
@@ -416,7 +416,7 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
     });
 }
 
-export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, queuePlayers: string, queueCount: number, isInLaunchState: boolean, deferred: boolean): Promise<void> => {
+export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType> | CommandInteraction, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, queuePlayers: string, queueCount: number, isInLaunchState: boolean, deferred: boolean): Promise<void> => {
     if (!queuePlayers) queuePlayers = "\u200b";
     var currentTime = new Date();
     const minutesToReady = 5;
@@ -473,7 +473,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
         embeds: [queueEmbed],
         components: [activeButtonRow1/*, activeButtonRow2*/]
     });
-    if (!deferred) {
+    if (!deferred && interaction instanceof ButtonInteraction) {
         deferred = true;
         await interaction.deferUpdate().catch(error => {
             console.log(error);
@@ -481,7 +481,7 @@ export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType>
     }
 }
 
-export const rebuildQueue = async (interaction: ButtonInteraction<CacheType>, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, updatedQueuePlayers: IQueuePlayer[], guild: IGuild, queue: IQueue, deferred: boolean): Promise<void> => {
+export const rebuildQueue = async (interaction: ButtonInteraction<CacheType> | CommandInteraction, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, updatedQueuePlayers: IQueuePlayer[], guild: IGuild, queue: IQueue, deferred: boolean): Promise<void> => {
     var queueCount = Number(updatedQueuePlayers.length);
     var isInLaunchState = false;
     var hidePlayerNames = queue.hidePlayerNames;

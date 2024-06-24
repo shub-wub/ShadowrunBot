@@ -357,7 +357,8 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
             1 : Math.floor(Math.random() * 3);
         maps.push(mapPoolA[mapPoolAChoice1]);
         maps.push(mapPoolA[mapPoolAChoice2]);
-        maps.splice(mapPoolBMatchCardLocation, 0, mapPoolB[mapPoolBChoice]);
+        maps.push(mapPoolB[mapPoolBChoice]);
+        // maps.splice(mapPoolBMatchCardLocation, 0, mapPoolB[mapPoolBChoice]);
 
         var teams = generateTeams(players);
         const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, maps, queue);

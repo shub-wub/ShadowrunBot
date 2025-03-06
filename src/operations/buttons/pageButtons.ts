@@ -19,7 +19,7 @@ export const pageButton = async (
 	if (!leaderboardRecord) return;
 	// Retrieve the players from the database and sort by rating
 	const cutoffDate = new Date();
-	cutoffDate.setDate(cutoffDate.getDate() - 14);
+	cutoffDate.setDate(cutoffDate.getDate() - 1054);
 	const sortOption = {} as any;
 	leaderboardRecord.device == "pc2" ? sortOption['mapsPlayed'] = -1 : sortOption['rating'] = -1;
 	const players = await Player.aggregate([
@@ -28,8 +28,9 @@ export const pageButton = async (
 		{$sort: sortOption}
 	]);
 	const playersPerPage = 25;
-	if (direction == "previous") leaderboardRecord.page--;
-	else if (direction == "next") leaderboardRecord.page++;
+	if (direction == "previous") leaderboardRecord.page > 1 && leaderboardRecord.page <= Math.ceil(players.length / playersPerPage) ? leaderboardRecord.page-- : leaderboardRecord.page = 1;
+	else if (direction == "next") leaderboardRecord.page >= 1 && leaderboardRecord.page < Math.ceil(players.length / playersPerPage) ? leaderboardRecord.page++ : leaderboardRecord.page = 1;
+	else if (direction == "reload") leaderboardRecord.page = leaderboardRecord.page > Math.ceil(players.length / playersPerPage) || leaderboardRecord.page <= 0 ? 1 : leaderboardRecord.page;
 	try {
 		leaderboardRecord.save();
 	} catch (error) {

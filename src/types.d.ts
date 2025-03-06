@@ -182,3 +182,8 @@ export interface IGuild extends mongoose.Document {
     obsidianMin: number,
     obsidianMax: number
 }
+
+export interface IQueuePlayerBan extends mongoose.Document {
+    queueMessageId: string,
+    playerDiscordId: string,
+}

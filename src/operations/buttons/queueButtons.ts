@@ -1,12 +1,13 @@
 import { getThemeColor, mongoError } from "#utilities";
 import { CacheType, ButtonInteraction, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageActionRowComponentBuilder, Client, TextChannel, Message, User, GuildMember, PermissionsBitField, CommandInteraction, } from "discord.js";
 import QueuePlayer from "#schemas/queuePlayer";
+import QueuePlayerBan from "#schemas/queuePlayerBan";
 import Player from "#schemas/player";
 import Guild from "#schemas/guild";
 import Queue from "#schemas/queue";
 import Match from "#schemas/match";
 import Map from "#schemas/map";
-import { Field, IGuild, IPlayer, IQueue, IQueuePlayer, IMap } from "../../types";
+import { Field, IGuild, IPlayer, IQueue, IQueuePlayer, IQueuePlayerBan, IMap } from "../../types";
 import { MongooseError } from "mongoose";
 import { generateTeams, getRankEmoji } from "#operations";
 
@@ -17,13 +18,14 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
     const queueEmbed = EmbedBuilder.from(receivedEmbed);
     const playerQuery = Player.findOne<IPlayer>({ discordId: userId });
     const queueUserQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId, messageId: interaction.message.id }]);
-    const queueUserInMatchQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }, { matchMessageId: { $exists: true } }])
+    const queueUserInMatchQuery = QueuePlayer.findOne<IQueuePlayer>().and([{ discordId: userId }, { matchMessageId: { $exists: true } }]);
+    const userBanFromQueueQuery = QueuePlayerBan.findOne<IQueuePlayerBan>().and([{ playerDiscordId: userId, queueMessageId: interaction.message.id }]);
     const queueAllPlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]).sort({ queuePosition: 1 });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     const queueQuery = Queue.findOne<IQueue>({ messageId: interaction.message.id });
 
-    await Promise.all([playerQuery, queueUserQuery, queueUserInMatchQuery, queueAllPlayers, guildQuery, queueQuery])
-        .then(async (queryResults: [IPlayer | null, IQueuePlayer | null, IQueuePlayer | null, IQueuePlayer[], IGuild | null, IQueue | null]) => {
+    await Promise.all([playerQuery, queueUserQuery, queueUserInMatchQuery, queueAllPlayers, guildQuery, queueQuery, userBanFromQueueQuery])
+        .then(async (queryResults: [IPlayer | null, IQueuePlayer | null, IQueuePlayer | null, IQueuePlayer[], IGuild | null, IQueue | null, IQueuePlayerBan | null]) => {
 
             var player = queryResults[0];
             var queueUser = queryResults[1];
@@ -31,10 +33,19 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
             var queuePlayers = queryResults[3];
             var guild = queryResults[4];
             var queue = queryResults[5];
+            var queuePlayerBan = queryResults[6];
 
             if (player?.isBanned) {
                 await interaction.reply({
                     content: `You have been banned from ranked until you appeal or the ban time is up.`,
+                    ephemeral: true
+                });
+                return;
+            }
+
+            if (queuePlayerBan != null) {
+                await interaction.reply({
+                    content: `You have been banned from this queue.`,
                     ephemeral: true
                 });
                 return;

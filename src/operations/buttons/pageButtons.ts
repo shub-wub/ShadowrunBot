@@ -19,7 +19,7 @@ export const pageButton = async (
 	if (!leaderboardRecord) return;
 	// Retrieve the players from the database and sort by rating
 	const cutoffDate = new Date();
-	cutoffDate.setDate(cutoffDate.getDate() - 1054);
+	cutoffDate.setDate(cutoffDate.getDate() - 14);
 	const sortOption = {} as any;
 	leaderboardRecord.device == "pc2" ? sortOption['mapsPlayed'] = -1 : sortOption['rating'] = -1;
 	const players = await Player.aggregate([

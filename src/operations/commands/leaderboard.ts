@@ -104,12 +104,16 @@ export const createLeaderboardButtonRow = (
 		.setLabel("Previous")
 		.setStyle(ButtonStyle.Secondary)
 		.setDisabled(pageNumber === 1);
+	const reloadButton = new ButtonBuilder()
+		.setCustomId("reload")
+		.setLabel("Reload")
+		.setStyle(ButtonStyle.Secondary)
 	const nextButton = new ButtonBuilder()
 		.setCustomId("next")
 		.setLabel("Next")
 		.setStyle(ButtonStyle.Secondary)
 		.setDisabled(pageNumber === Math.ceil(players.length / playersPerPage));
-	buttonRow.addComponents(previousButton, nextButton);
+	buttonRow.addComponents(previousButton, reloadButton, nextButton);
 	return buttonRow;
 };
 

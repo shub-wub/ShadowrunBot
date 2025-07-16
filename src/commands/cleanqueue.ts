@@ -28,7 +28,8 @@ const command: SlashCommand = {
         }
         else {
             try {
-                var queueID: string = (interaction.options as any).getString("queueid");
+                var queueID: string = (interaction as any).options.getString('queueid');
+		console.log('Slash command queueID:', queueID);
                 const currentTime = new Date(Date.now()).toLocaleString();
                 console.log(currentTime + " " + interaction.user.username + " submitted command cleanqueue on queue " + queueID);
                 const guild = await Guild.findOne<IGuild>({

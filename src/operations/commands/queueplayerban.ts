@@ -17,8 +17,8 @@ export const toggleQueuePlayerBan = async (
         return;
     }
     
-    var queueId: string = (interaction.options as any).getString("queueid");
-    var discordUser = interaction.options.getUser("playerid");
+    var queueId: string = (interaction as any).options.getString("queueid");
+    var discordUser = (interaction as any).options.getUser("playerid");
     if (!queueId) return;
     if (!discordUser) return;
     var discordId = discordUser.id;

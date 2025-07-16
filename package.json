@@ -32,16 +32,16 @@
 		]
 	},
 	"dependencies": {
-		"@types/node": "^18.13.0",
+		"@types/node": "^24.0.14",
 		"chalk": "4.1.2",
-		"discord-api-types": "^0.37.33",
-		"discord.js": "^14.11.0",
+		"discord-api-types": "^0.38.16",
+		"discord.js": "^14.21.0",
 		"dotenv": "^16.0.3",
 		"mongoose": "^6.9.1",
-		"pm2": "^5.4.2",
-		"ts-node": "^10.9.1"
+		"pm2": "^6.0.8",
+		"ts-node": "^10.9.2"
 	},
 	"devDependencies": {
-		"typescript": "^4.8.2"
+		"typescript": "^5.8.3"
 	}
 }

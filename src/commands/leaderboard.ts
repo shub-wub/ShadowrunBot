@@ -17,7 +17,7 @@ const command: SlashCommand = {
 		// Retrieve the players from the database and sort by rating
 		const cutoffDate = new Date();
 		cutoffDate.setDate(cutoffDate.getDate() - 14);
-		var device: string = (interaction.options as any).getString("device");
+		var device: string = (interaction as any).options.getString("device");
 		const sortOption = {} as any;
 		device == "pc2" ? sortOption['mapsPlayed'] = -1 : sortOption['rating'] = -1;
 

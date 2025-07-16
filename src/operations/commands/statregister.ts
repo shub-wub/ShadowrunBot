@@ -7,7 +7,7 @@ import { IPlayer } from "../../types";
 export const statRegister = async (
 	interaction: CommandInteraction<CacheType>
 ): Promise<void> => {
-	var discordUser = interaction.options.getUser("discorduser");
+	var discordUser = (interaction as any).options.getUser("discorduser");
 	if (!discordUser) return;
 	var discordId = discordUser.id;
 

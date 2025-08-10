@@ -285,7 +285,7 @@ export const createMatchButtonRow2 = (g1: boolean, g2: boolean, g3: boolean): Ac
     return buttonRow;
 };
 
-export const createMatch = async (interaction: ButtonInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[], queue: IQueue): Promise<void> => {
+export const createMatch = async (interaction: ButtonInteraction<CacheType> | CommandInteraction<CacheType>, client: Client, queuePlayers: IQueuePlayer[], queue: IQueue): Promise<void> => {
     const playersQuery = Player.find({ discordId: { $in: queuePlayers.map(qp => qp.discordId) } });
     const guildQuery = Guild.findOne<IGuild>({ guildId: interaction.guildId });
     //const mapQueryG1 = Map.find<IMap>({ gameType: "Attrition" });
@@ -388,7 +388,7 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType>, cli
         try {
             new Match({
                 messageId: message.id,
-                queueId: interaction.message.id,
+                queueId: queue.messageId,
                 map1: maps[0].name,
                 map2: maps[1].name,
                 map3: maps[2].name,
@@ -569,11 +569,11 @@ export const updateQueuePositions = async (updatedQueuePlayers: IQueuePlayer[]):
     }));
 };
 
-export const removeNewMatchPlayersFromOtherQueues = async (interaction: ButtonInteraction<CacheType>, queuePlayers: IQueuePlayer[]) => {
+export const removeNewMatchPlayersFromOtherQueues = async (interaction: ButtonInteraction<CacheType> | CommandInteraction<CacheType>, queuePlayers: IQueuePlayer[]) => {
     for (const qp of queuePlayers) {
         try {
             await QueuePlayer.deleteMany(
-                { discordId: qp.discordId, messageId: { $ne: interaction.message.id } }
+                { discordId: qp.discordId, messageId: { $ne: qp.messageId } }
             )
         } catch (error) {
             mongoError(error as MongooseError);

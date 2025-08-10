@@ -14,7 +14,7 @@ const command: SlashCommand = {
         )
         .addUserOption(option =>
             option
-                .setName('playerid')
+                .setName('player_name')
                 .setDescription('The discord user you want to ban from the queue.')
                 .setRequired(true)
         ),

@@ -165,3 +165,9 @@ export const isGmOrBetter = async (interaction: ButtonInteraction | CommandInter
     return guildUser?.roles.cache.some(r => r.name.toLocaleLowerCase() === 'gm' || r.name.toLocaleLowerCase() === 'moderator' || r.name.toLocaleLowerCase() === 'admin') as boolean;
     //const isAdmin = guildUser?.permissions.has(PermissionsBitField.Flags.Administrator);
 }
+
+export const isNerdsOfficerOrBetter = async (interaction: ButtonInteraction | CommandInteraction): Promise<boolean> => {
+    var guildUser = await interaction.guild?.members.fetch(interaction.user.id);
+
+    return guildUser?.roles.cache.some(r => r.name.toLocaleLowerCase() === 'nerds officer' || r.name.toLocaleLowerCase() === 'moderator' || r.name.toLocaleLowerCase() === 'admin') as boolean;
+}

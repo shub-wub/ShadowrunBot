@@ -17,7 +17,7 @@ const event: BotEvent = {
         });
         const currentTime = new Date(Date.now()).toLocaleString();
         if (message.channelId === guildRecord?.leaderboardChannelId) {
-            console.log(currentTime + "Message deleted from leaderboard channel: " + message.id);
+            console.log(currentTime + " Message deleted from leaderboard channel: " + message.id);
             const leaderboardQuery = Leaderboard.findOne<ILeaderboard>().and([{ messageId: message.id }]);
             try {
                 await Leaderboard.deleteOne(leaderboardQuery);
@@ -29,7 +29,7 @@ const event: BotEvent = {
                 });
             }
         } else if (message.channelId === guildRecord?.queueChannelId) {
-            console.log(currentTime + "Message deleted from queue channel: " + message.id);
+            console.log(currentTime + " Message deleted from queue channel: " + message.id);
             const queueQuery = await Queue.findOne<IQueue>().and([{ messageId: message.id }]);
             const queueMessageId = queueQuery?.messageId;
             const queuePlayersQuery = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: queueMessageId, matchMessageId: { $exists: false } }]);
@@ -54,7 +54,7 @@ const event: BotEvent = {
                 });
             }
         } else if (message.channelId === guildRecord?.matchChannelId) {
-            console.log(currentTime + "Message deleted from match channel: " + message.id);
+            console.log(currentTime + " Message deleted from match channel: " + message.id);
             const matchQuery = await Match.findOne<IMatch>().and([{ messageId: message.id, matchWinner: { $exists: false } }]);
             if (!matchQuery) return;
             try {

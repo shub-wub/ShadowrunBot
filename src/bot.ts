@@ -3,7 +3,7 @@ config();
 const { token } = process.env;
 import { Client, Collection/*, Partials */} from "discord.js";
 import { SlashCommand, Button, SelectMenu, Modal } from "./types";
-import { eventsHandler, commandHandler, componentHandler, mongoHandler } from "#handlers";
+import { eventsHandler, commandHandler, componentHandler, mongoHandler, interactionsHandler } from "#handlers";
 
 const client = new Client({ intents: 32767/*, partials: [Partials.Message, Partials.Channel] */}); // add in all intents and partials
 client.commands = new Collection<string, SlashCommand>();
@@ -16,5 +16,6 @@ client.commandArray = [];
 eventsHandler(client);
 commandHandler(client);
 componentHandler(client);
+interactionsHandler(client);
 mongoHandler();
 client.login(token);

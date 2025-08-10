@@ -4,6 +4,7 @@ export * from "./commands/srinitialize.js";
 export * from "./commands/leaderboard.js";
 export * from "./commands/statregister.js";
 export * from "./commands/queueplayerban.js";
+export * from "./commands/mapModify.js";
 export * from "./commands/playerEloSet.js";
 export * from "./commands/playerSub.js";
 export * from "./buttons/queueButtons.js";

@@ -29,31 +29,31 @@ const command: SlashCommand = {
                 }
             }
         }
-        var teamString = '';
+        var teamString = "";
         var runningPlayerCount = 0;
         if (chosenRaces[0] > 0) {
-            teamString.concat(`Humans: ${chosenRaces[0]}`);
+            teamString = teamString + `Humans: ${chosenRaces[0]}`;
             runningPlayerCount += chosenRaces[0];
             if (runningPlayerCount != 4) {
-                teamString.concat(', ');
+                teamString = teamString + ", ";
             }
         }
         if (chosenRaces[1] > 0) {
-            teamString.concat(`Elves: ${chosenRaces[1]}`);
+            teamString = teamString + `Elves: ${chosenRaces[1]}`;
             runningPlayerCount += chosenRaces[1];
             if (runningPlayerCount != 4) {
-                teamString.concat(', ');
+                teamString = teamString + ", ";
             }
         }
         if (chosenRaces[2] > 0) {
-            teamString.concat(`Trolls: ${chosenRaces[2]}`);
+            teamString = teamString + `Trolls: ${chosenRaces[2]}`;
             runningPlayerCount += chosenRaces[2];
             if (runningPlayerCount != 4) {
-                teamString.concat(', ');
+                teamString = teamString + ", ";
             }
         }
         if (chosenRaces[3] > 0) {
-            teamString.concat(`Dwarves: ${chosenRaces[3]}`);
+            teamString = teamString + `Dwarves: ${chosenRaces[3]}`;
         }
         await interaction.reply({
             content: `Suggested Lineup: ${teamString}`

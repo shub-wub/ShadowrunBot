@@ -76,7 +76,7 @@ export const playerSub = async (
                 return;
             }
 
-            const queue = await Queue.findOne().and([{discordId: player1QueuePlayerEntry.messageId}]);
+            const queue = await Queue.findOne().and([{messageId: player1QueuePlayerEntry.messageId}]);
             if (!queue) throw Error('Queue not found in DB');
 
 
@@ -85,7 +85,6 @@ export const playerSub = async (
             for (var i = 0; i < allPlayersInSameMatch.length; i++) {
                 if (allPlayersInSameMatch[i].discordId != player1.discordId){
                     newPlayersForMatch.push(allPlayersInSameMatch[i])
-                    await allPlayersInSameMatch[i].updateOne({ $unset: { matchMessageId: 1, team: 1 } });
 
                 }
             }

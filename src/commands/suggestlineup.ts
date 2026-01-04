@@ -12,23 +12,32 @@ const command: SlashCommand = {
             chosenRaces[3] = 1;
         }
         var raceOdds = [33, 33, 33];
-        var range = 0;
-        for (let i = 0; i < 3; i++) {
-            range = range + raceOdds[i];
-        }
-        for (let i = 0; i < 4 - (dwarfChosen ? 1 : 0); i++) {
-            var randomValue = Math.random() * range;
+        const range = raceOdds[0] + raceOdds[1] + raceOdds[2];
+        var playerCount = dwarfChosen ? 1 : 0;
+        while (playerCount < 4) {
+            const randomValue = Math.random() * range;
             var runningOddCheck = 0;
-            for (let j = 0; j < raceOdds.length; j++) {
-                runningOddCheck = runningOddCheck + raceOdds[j];
+            for (let i = 0; i < raceOdds.length; i++) {
+                runningOddCheck = runningOddCheck + raceOdds[i];
                 if (randomValue < runningOddCheck) {
-                    chosenRaces[j] += 1;
-                    raceOdds[j] = Math.max(0, raceOdds[j] - 11);
-                    range -= 11;
+                    if (chosenRaces[i] != 3) {
+                        chosenRaces[i] += 1;
+                        playerCount += 1;
+                    }
                     break;
                 }
             }
         }
+
+        if (chosenRaces[0] == 2 && chosenRaces[1] == 1 && chosenRaces[2] == 1) {
+            chosenRaces[0] = 1;
+            if (Math.random() > 0.5) {
+                chosenRaces[1] = 2;
+            } else {
+                chosenRaces[2] = 2;
+            }
+        }
+
         var teamString = "";
         var runningPlayerCount = 0;
         if (chosenRaces[0] > 0) {

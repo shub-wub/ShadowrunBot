@@ -97,7 +97,8 @@ export interface IQueuePlayer extends mongoose.Document {
     queuePosition: number,
     queueTime: Date,
     team: number,
-    ready: boolean
+    ready: boolean,
+    notified: boolean
 }
 
 export interface IQueue extends mongoose.Document {

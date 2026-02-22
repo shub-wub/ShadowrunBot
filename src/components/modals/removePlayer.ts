@@ -10,7 +10,7 @@ const modal : Modal = {
         var playerId = interaction.fields.getTextInputValue("playerInput");
         const currentTime = new Date(Date.now()).toLocaleString();
         console.log(currentTime + " " + interaction.user.username + " submitted 'Remove Player' for " + playerId);
-        removeUserFromQueue(interaction as unknown as ButtonInteraction, playerId);
+        removeUserFromQueue(interaction as unknown as ButtonInteraction, client, playerId);
     },
     //cooldown: 10
 }

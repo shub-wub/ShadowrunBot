@@ -9,7 +9,7 @@ import Match from "#schemas/match";
 import MatchPlayer from "#schemas/matchPlayer";
 import Map from "#schemas/map";
 import { MongooseError } from "mongoose";
-import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji, getRankRole, rebuildQueue, updateQueueEmbed, updateQueuePositions } from "#operations";
+import { calculateTeamElo, createMatchButtonRow1, createMatchButtonRow2, getRankEmoji, getRankRole, notifyTopPlayers, rebuildQueue, updateQueueEmbed, updateQueuePositions } from "#operations";
 import { truncateSync } from "fs";
 
 export const openScoreModal = (interaction: ButtonInteraction<CacheType>, team: number, game: number): void => {
@@ -367,6 +367,12 @@ export const addWinnersBackToQueue = async (interaction: ModalSubmitInteraction<
 
 		updatedQueuePlayers = updatedWinningPlayers.concat(queuePlayers);
 		await updateQueuePositions(updatedQueuePlayers);
+
+		// Notify top 8 players if the queue has enough for a match after winners are re-added
+		if (updatedQueuePlayers.length >= 8 && queue) {
+			await notifyTopPlayers(client, updatedQueuePlayers, queue);
+		}
+
 		rebuildQueue(interaction as unknown as ButtonInteraction<CacheType>, queueEmbed, queueEmbedMessage, updatedQueuePlayers, guild, queue as IQueue, true)
 	});
 }

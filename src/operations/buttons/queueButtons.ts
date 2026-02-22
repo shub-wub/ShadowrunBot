@@ -11,6 +11,15 @@ import { Field, IGuild, IPlayer, IQueue, IQueuePlayer, IQueuePlayerBan, IMap } f
 import { MongooseError } from "mongoose";
 import { generateTeams, getRankEmoji } from "#operations";
 
+export const notifyTopPlayers = async (client: Client, queuePlayers: IQueuePlayer[], queue: IQueue): Promise<void> => {
+    const top8 = queuePlayers.filter(qp => qp.queuePosition <= 8);
+    for (const uqp of top8) {
+        var user = client.users.cache.get(uqp.discordId);
+        if (!user) continue;
+        await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+    }
+};
+
 export const processQueue = async (interaction: ButtonInteraction, client: Client, overridePlayer?: string): Promise<void> => {
     var userId = overridePlayer ? overridePlayer : interaction.user.id;
 
@@ -110,20 +119,8 @@ export const processQueue = async (interaction: ButtonInteraction, client: Clien
             queuePlayers.push(queueRecord);
             await updateQueuePositions(queuePlayers);
 
-            if (queuePlayers.length == 8) {
-                for (const uqp of queuePlayers) {
-                    if (uqp.queuePosition <= 8) {
-                        var user = client.users.cache.get(uqp.discordId);
-                        if (!user) continue;
-                        await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
-                    }
-                }
-                if (queuePlayers.length >= 13) {
-                    await interaction.reply({
-                        content: `You have been added to this queue. You are in position ${queuePlayers.length}.`,
-                        ephemeral: true
-                    });
-                }
+            if (queuePlayers.length >= 8) {
+                await notifyTopPlayers(client, queuePlayers, queue);
             }
             rebuildQueue(interaction, queueEmbed, interaction.message, queuePlayers, guild, queue, false);
         }).catch(async error => {
@@ -175,7 +172,7 @@ export const launchMatch = async (interaction: ButtonInteraction, client: Client
         });
 }
 
-export const removeUserFromQueue = async (interaction: ButtonInteraction, overridePlayer?: string): Promise<void> => {
+export const removeUserFromQueue = async (interaction: ButtonInteraction, client?: Client, overridePlayer?: string): Promise<void> => {
     var userId = overridePlayer ? overridePlayer : interaction.user.id;
     const queueUserQuery = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: userId }, { matchMessageId: { $exists: false } }]);
     const otherQueuePlayers = QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { discordId: { $ne: userId } }, { matchMessageId: { $exists: false } }])
@@ -209,6 +206,12 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, overri
             if (otherPlayersInQueue) {
                 await updateQueuePositions(otherPlayersInQueue);
             }
+
+            // Notify top 8 players if the queue still has enough for a match after removal
+            if (client && updatedQueue && updatedQueue.length >= 8 && queue) {
+                await notifyTopPlayers(client, updatedQueue, queue);
+            }
+
             rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueue, queryResults[1], queue as IQueue, false);
         }).catch(async error => {
             mongoError(error);

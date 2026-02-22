@@ -8,7 +8,7 @@ const button: Button = {
     execute: async (interaction, client) => {
         const currentTime = new Date(Date.now()).toLocaleString();
         console.log(currentTime + " " + interaction.user.username + " pushed 'Remove Me'");
-        removeUserFromQueue(interaction);
+        removeUserFromQueue(interaction, client);
     },
     //cooldown: 2
 }

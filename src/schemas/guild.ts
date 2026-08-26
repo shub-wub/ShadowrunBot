@@ -32,6 +32,7 @@ const guildSchema = new Schema<IGuild>({
     diamondMax: Number,
     obsidianMin: Number,
     obsidianMax: Number,
+    mapSelectionMethod: Number
 })
 
 export default model("guild", guildSchema, "guilds");

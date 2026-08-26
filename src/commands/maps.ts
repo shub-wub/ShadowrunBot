@@ -1,8 +1,9 @@
 import { CommandInteraction, SlashCommandBuilder, MessageFlags, Client } from 'discord.js';
 import { SlashCommand } from '../types';
 import Map from '#schemas/map'
+import Guild from '#schemas/guild';
+import { IGuild } from '../types';
 import { isNerdsOfficerOrBetter, mapModify } from '#operations';
-import map from '#schemas/map';
 
 
 const command: SlashCommand = {
@@ -24,12 +25,12 @@ const command: SlashCommand = {
                 option
                     .setName('playable')
                     .setDescription('Set the map into rotation.')
-                    .setRequired(false)
+                    .setRequired(true)
             )
-            .addBooleanOption(option =>
+            .addStringOption(option =>
                 option
-                    .setName('map_3_only')
-                    .setDescription('Whether the map should be for Map 3 only or playable for Maps 1 and/or 2.')
+                    .setName('map_pool')
+                    .setDescription('What map pool the map should be in (only matters for certain map selection methods).')
                     .setRequired(false)
             )
         )
@@ -41,6 +42,18 @@ const command: SlashCommand = {
                 option
                     .setName('map')
                     .setDescription('The map you want info on.')
+                    .setAutocomplete(true)
+                    .setRequired(true)
+            )
+        )
+        .addSubcommand( subcommand => 
+            subcommand
+            .setName('selection_method')
+            .setDescription("Change the selection method / algorithm used to select maps.")
+            .addStringOption(option =>
+                option
+                    .setName('method')
+                    .setDescription('The method to use.')
                     .setAutocomplete(true)
                     .setRequired(true)
             )
@@ -62,11 +75,31 @@ const command: SlashCommand = {
                     const mapId = (interaction as any).options.getString('map');
                     const map = await Map.findOne({_id: mapId});
                     if (!map) throw Error('Could not find map in DB');
-                    const replyMessage = `${map?.name} - ${map?.gameType == 'Out of Rotation' ? 'Not Playable' : `Playable  - ${map?.mapPool == 'B' ? 'Map 3 Only' : 'Map 1 and/or Map 2'}`}`;
+                    const replyMessage = `${map?.name} - ${map?.selectable ? 'Playable' : `Not Playable`} - Map Pool ${map?.mapPool}`;
                     await interaction.reply({
                         content: replyMessage,
                         flags: MessageFlags.Ephemeral
                     })
+                } catch(error) {
+                    console.log(error);
+                    return;
+                }
+            }
+            else if ((interaction as any).options.getSubcommand() === 'selection_method') {
+                try {
+                    const guild = await Guild.findOne<IGuild>({guildId: interaction.guildId});
+                    if (!guild) throw Error('Could not find Guild record');
+                    const selected_method_value = (interaction as any).options.getString('method') ?? 1;
+                    guild.mapSelectionMethod = Number(selected_method_value);
+                    guild.save();
+
+                    const currentTime = new Date(Date.now()).toLocaleString();
+                    console.log(currentTime + " " + interaction.user.username + " set map selection method " + selected_method_value);
+                    await interaction.reply({
+                        content:`You chose Map Selection Algorithm ${selected_method_value}`,
+                        flags: MessageFlags.Ephemeral
+                    });
+
                 } catch(error) {
                     console.log(error);
                     return;

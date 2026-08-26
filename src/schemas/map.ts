@@ -5,7 +5,8 @@ const queueSchema = new Schema<IMap>({
     name: String,
     gameType: String,
     uniqueId: Number,
-    mapPool: String
+    mapPool: String,
+    selectable: Boolean
 });
 
 export default model("Map", queueSchema, "maps");

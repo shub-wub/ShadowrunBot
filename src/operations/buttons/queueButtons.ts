@@ -293,139 +293,95 @@ export const createMatch = async (interaction: ButtonInteraction<CacheType> | Co
     /* THIS CODE IS CURRENTLY UNUSED BUT MAY COME BACK
     // const mapQueryG3 = Map.find<IMap>({ $or: [{ gameType: "Attrition" }, { gameType: "AttritionG3" }] });
     */
-    const mapQueryA = Map.find<IMap>({gameType: "Attrition", mapPool: "A"})
-    const mapQueryB = Map.find<IMap>({gameType: "Attrition", mapPool: "B"})
-  await Promise.all([playersQuery, guildQuery, mapQueryA, mapQueryB])
-    .then(async (queryResults: [IPlayer[], IGuild | null, IMap[], any]) => {
-      const players = queryResults[0];
-      const guild = queryResults[1];
+    const mapQuery = Map.find<IMap>({selectable: true});
+    await Promise.all([playersQuery, guildQuery, mapQuery])
+        .then(async (queryResults: [IPlayer[], IGuild | null, IMap[]]) => {
+            const players = queryResults[0];
+            const guild = queryResults[1];
 
-      /* THIS CODE IS CURRENTLY UNUSED BUT MAY COME BACK
-        // Games 1-3 have different map pools
-        // Game 1 = attritionMaps (does not include Pinnacle)
-        // Game 2 = extractionMaps
-        // Game 3 = allAttritionMaps (includes Pinnacle)
-        // const allAttritionMaps = queryResults[4];
-        */
+            const allPlayableMaps = queryResults[2];
 
-    //   const attritionMaps = queryResults[2];
-    //   const extractionMaps = queryResults[3];
-      const mapPoolA = queryResults[2];
-      const mapPoolB = queryResults[3];
-
-      if (players.length !== queuePlayers.length) {
-        console.log("Not all players were found.");
-        return;
-      }
-      if (!guild) {
-        await interaction.reply({
-          content: `There was no guild record found. Try using /srinitialize first.`,
-          ephemeral: true,
-        });
-        return;
-      }
-
-      // Randomize maps in array
-      var maps: IMap[] = [];
-
-      // Create map selection with no duplicates
-    //   const chooseMap = (mapPool: IMap[]) => {
-    //   while (true) {
-    //     let uniqueMap = true;
-    //     const mapPoolIndex = Math.floor(Math.random() * mapPool.length);
-    //     for (i = 0; i < maps.length; i++) {
-    //       if (maps[i].uniqueId == mapPool[mapPoolIndex].uniqueId) {
-    //         uniqueMap = false;
-    //         break;
-    //       }
-    //     }
-    //     if (!uniqueMap) {
-    //       continue;
-    //     }
-    //     maps.push(mapPool[mapPoolIndex]);
-    //     break;
-    //   }
-    // };
-
-    // Choose if Extraction is in the map selection
-    // Numbers 0-2 mean Extraction for the corresponding map number
-    // Anything above 2 means no Extraction
-    // const extractionOrderNum = Math.floor(Math.random() * 5);
-    //   for (var i = 0; i < 3; i += 1) {
-    //     if (i == extractionOrderNum) {
-    //       chooseMap(extractionMaps);
-    //     } else {
-    //       chooseMap(attritionMaps);
-    //     }
-    // }
-        const mapPoolAChoice1 = Math.floor(Math.random() * mapPoolA.length);
-        var mapPoolAChoice2 = Math.floor(Math.random() * mapPoolA.length);
-        while (mapPoolA[mapPoolAChoice1].uniqueId == mapPoolA[mapPoolAChoice2].uniqueId) {mapPoolAChoice2 = Math.floor(Math.random() * mapPoolA.length);}
-        const mapPoolBChoice = Math.floor(Math.random() * mapPoolB.length);
-
-
-        const mapPoolBMatchCardLocation = mapPoolA[mapPoolAChoice1].uniqueId == mapPoolA[mapPoolAChoice2].uniqueId ?
-            1 : Math.floor(Math.random() * 3);
-        maps.push(mapPoolA[mapPoolAChoice1]);
-        maps.push(mapPoolA[mapPoolAChoice2]);
-        maps.push(mapPoolB[mapPoolBChoice]);
-        // maps.splice(mapPoolBMatchCardLocation, 0, mapPoolB[mapPoolBChoice]);
-
-        var teams = generateTeams(players);
-        const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, maps, queue);
-        const buttonRow1 = createMatchButtonRow1(false, true, true);
-        const buttonRow2 = createMatchButtonRow2(false, true, true);
-
-        var channel = await client.channels.fetch(
-            guild.matchChannelId
-        );
-
-        var message = await (channel as TextChannel).send({
-            embeds: [initialEmbed],
-            components: [buttonRow1, buttonRow2],
-        });
-
-        try {
-            new Match({
-                messageId: message.id,
-                queueId: queue.messageId,
-                map1: maps[0].name,
-                map2: maps[1].name,
-                map3: maps[2].name,
-                team1ReportedT1G1Rounds: 0,
-                team1ReportedT1G2Rounds: 0,
-                team1ReportedT1G3Rounds: 0,
-                team1ReportedT2G1Rounds: 0,
-                team1ReportedT2G2Rounds: 0,
-                team1ReportedT2G3Rounds: 0,
-                team2ReportedT1G1Rounds: 0,
-                team2ReportedT1G2Rounds: 0,
-                team2ReportedT1G3Rounds: 0,
-                team2ReportedT2G1Rounds: 0,
-                team2ReportedT2G2Rounds: 0,
-                team2ReportedT2G3Rounds: 0
-            }).save();
-
-            await Promise.all(queuePlayers.map(async qp => {
-                qp.matchMessageId = message.id;
-                const team1Player = teams[1].find(p => p.discordId == qp.discordId);
-                qp.team = team1Player ? 1 : 2;
-                try {
-                    return qp.save();
-                } catch (error) {
-                    console.error("Error saving queue player:", error);
-                }
-            }));
-        } catch (error) {
-            mongoError(error as MongooseError);
-            console.log(`There was an error adding the match to the database.`)
+            if (players.length !== queuePlayers.length) {
+            console.log("Not all players were found.");
             return;
-        }
-    }).catch(async error => {
-        mongoError(error);
-        console.log(`There was an error getting data from the database for the match.`)
-        return;
-    });
+            }
+            if (!guild) {
+            await interaction.reply({
+                content: `There was no guild record found. Try using /srinitialize first.`,
+                ephemeral: true,
+            });
+            return;
+            }
+
+            var selectedMaps: IMap[] = [];
+
+            if (guild.mapSelectionMethod == 1) {
+                selectedMaps = mapAlgo1(allPlayableMaps);
+            } else if (guild.mapSelectionMethod == 2) {
+                selectedMaps = mapAlgo2(allPlayableMaps);
+            } else if (guild.mapSelectionMethod == 3) {
+                selectedMaps = mapAlgo3(allPlayableMaps);
+            } else if (guild.mapSelectionMethod == 4) {
+                selectedMaps = mapAlgo4(allPlayableMaps);
+            } else {
+                selectedMaps = mapAlgo1(allPlayableMaps);
+            }
+
+            var teams = generateTeams(players);
+            const initialEmbed = createMatchEmbed(teams[1], teams[0], guild, selectedMaps, queue);
+            const buttonRow1 = createMatchButtonRow1(false, true, true);
+            const buttonRow2 = createMatchButtonRow2(false, true, true);
+
+            var channel = await client.channels.fetch(
+                guild.matchChannelId
+            );
+
+            var message = await (channel as TextChannel).send({
+                embeds: [initialEmbed],
+                components: [buttonRow1, buttonRow2],
+            });
+
+            try {
+                new Match({
+                    messageId: message.id,
+                    queueId: queue.messageId,
+                    map1: selectedMaps[0].name,
+                    map2: selectedMaps[1].name,
+                    map3: selectedMaps[2].name,
+                    team1ReportedT1G1Rounds: 0,
+                    team1ReportedT1G2Rounds: 0,
+                    team1ReportedT1G3Rounds: 0,
+                    team1ReportedT2G1Rounds: 0,
+                    team1ReportedT2G2Rounds: 0,
+                    team1ReportedT2G3Rounds: 0,
+                    team2ReportedT1G1Rounds: 0,
+                    team2ReportedT1G2Rounds: 0,
+                    team2ReportedT1G3Rounds: 0,
+                    team2ReportedT2G1Rounds: 0,
+                    team2ReportedT2G2Rounds: 0,
+                    team2ReportedT2G3Rounds: 0
+                }).save();
+
+                await Promise.all(queuePlayers.map(async qp => {
+                    qp.matchMessageId = message.id;
+                    const team1Player = teams[1].find(p => p.discordId == qp.discordId);
+                    qp.team = team1Player ? 1 : 2;
+                    try {
+                        return qp.save();
+                    } catch (error) {
+                        console.error("Error saving queue player:", error);
+                    }
+                }));
+            } catch (error) {
+                mongoError(error as MongooseError);
+                console.log(`There was an error adding the match to the database.`)
+                return;
+            }
+        }).catch(async error => {
+            mongoError(error);
+            console.log(`There was an error getting data from the database for the match.`)
+            return;
+        });
 }
 
 export const updateQueueEmbed = async (interaction: ButtonInteraction<CacheType> | CommandInteraction, queueEmbed: EmbedBuilder, queueEmbedMessage: Message<boolean>, queuePlayers: string, queueCount: number, isInLaunchState: boolean, deferred: boolean): Promise<void> => {
@@ -580,4 +536,114 @@ export const removeNewMatchPlayersFromOtherQueues = async (interaction: ButtonIn
             console.log(`There was an error removing the players from the queueplayers in the database.`);
         }
     }
+}
+
+function mapAlgo1(maps: IMap[]) {
+    // All Attrition maps have even chance of being picked
+    var selectedMaps: IMap[] = [];
+
+    const attritionMaps = maps.filter((map) => {
+        return map.gameType == "Attrition";
+    });
+
+    const mapChoice1 = Math.floor(Math.random() * attritionMaps.length);
+    var mapChoice2 = Math.floor(Math.random() * attritionMaps.length);
+    while (attritionMaps[mapChoice1].uniqueId == attritionMaps[mapChoice2].uniqueId) {mapChoice2 = Math.floor(Math.random() * attritionMaps.length);}
+    var mapChoice3 = Math.floor(Math.random() * attritionMaps.length);
+    while (attritionMaps[mapChoice1].uniqueId == attritionMaps[mapChoice3].uniqueId || attritionMaps[mapChoice2].uniqueId == attritionMaps[mapChoice3].uniqueId) {mapChoice3 = Math.floor(Math.random() * attritionMaps.length);}
+
+    selectedMaps.push(attritionMaps[mapChoice1]);
+    selectedMaps.push(attritionMaps[mapChoice2]);
+    selectedMaps.push(attritionMaps[mapChoice3]);
+    return selectedMaps;
+}
+
+function mapAlgo2(maps: IMap[]) {
+    // Map Pools A and B where Map Pool B is game 3 only maps
+    var selectedMaps: IMap[] = [];
+
+    const mapPoolA = maps.filter((map) => {
+        return map.mapPool === "A" && map.gameType === "Attrition";
+    });
+    const mapPoolB = maps.filter((map) => {
+        return map.mapPool === "B" && map.gameType === "Attrition";
+    });
+
+    const mapChoice1 = Math.floor(Math.random() * mapPoolA.length);
+    var mapChoice2 = Math.floor(Math.random() * mapPoolA.length);
+    while (mapPoolA[mapChoice1].uniqueId == mapPoolA[mapChoice2].uniqueId) {mapChoice2 = Math.floor(Math.random() * mapPoolA.length);}
+    var mapChoice3 = Math.floor(Math.random() * mapPoolB.length);
+    while (mapPoolA[mapChoice1].uniqueId == mapPoolB[mapChoice3].uniqueId || mapPoolA[mapChoice2].uniqueId == mapPoolB[mapChoice3].uniqueId) {mapChoice3 = Math.floor(Math.random() * mapPoolB.length);}
+
+    selectedMaps.push(mapPoolA[mapChoice1]);
+    selectedMaps.push(mapPoolA[mapChoice2]);
+    selectedMaps.push(mapPoolB[mapChoice3]);
+    return selectedMaps;
+}
+
+function mapAlgo3(maps: IMap[]) {
+    // Attrition for Map 1, Extraction for Map 2, Attrition maps for Map 3
+    var selectedMaps: IMap[] = [];
+
+    const attritionMaps = maps.filter((map) => {
+        return map.gameType === "Attrition";
+    });
+    const extractionMaps = maps.filter((map) => {
+        return map.gameType === "Extraction";
+    });
+
+    const mapChoice1 = Math.floor(Math.random() * attritionMaps.length);
+    var mapChoice2 = Math.floor(Math.random() * extractionMaps.length);
+    while (attritionMaps[mapChoice1].uniqueId == extractionMaps[mapChoice2].uniqueId) {mapChoice2 = Math.floor(Math.random() * extractionMaps.length);}
+    var mapChoice3 = Math.floor(Math.random() * attritionMaps.length);
+    while (attritionMaps[mapChoice1].uniqueId == attritionMaps[mapChoice3].uniqueId || extractionMaps[mapChoice2].uniqueId == attritionMaps[mapChoice3].uniqueId) {mapChoice3 = Math.floor(Math.random() * attritionMaps.length);}
+
+    selectedMaps.push(attritionMaps[mapChoice1]);
+    selectedMaps.push(extractionMaps[mapChoice2]);
+    selectedMaps.push(attritionMaps[mapChoice3]);
+    return selectedMaps;
+}
+
+function mapAlgo4(maps: IMap[]) {
+    // Extraction has a 40% chance of being chosen and can be in one spot
+    var selectedMaps: IMap[] = [];
+
+    const attritionMaps = maps.filter((map) => {
+        return map.gameType === "Attrition";
+    });
+    const extractionMaps = maps.filter((map) => {
+        return map.gameType === "Attrition";
+    });
+
+    const chooseMap = (mapPool: IMap[]) => {
+        while (true) {
+            let uniqueMap = true;
+            const mapPoolIndex = Math.floor(Math.random() * mapPool.length);
+            for (i = 0; i < selectedMaps.length; i++) {
+                if (selectedMaps[i].uniqueId == mapPool[mapPoolIndex].uniqueId) {
+                uniqueMap = false;
+                break;
+                }
+            }
+            if (!uniqueMap) {
+                continue;
+            }
+            selectedMaps.push(mapPool[mapPoolIndex]);
+            break;
+        }
+    };
+
+    // Choose if Extraction is in the map selection
+    // Numbers 0-2 mean Extraction for the corresponding map number
+    // Anything above 2 means no Extraction
+    const extractionOrderNum = Math.floor(Math.random() * 7.5);
+      for (var i = 0; i < 3; i += 1) {
+        if (i == extractionOrderNum) {
+          chooseMap(extractionMaps);
+        } else {
+          chooseMap(attritionMaps);
+        }
+    }
+
+    return selectedMaps;
 }

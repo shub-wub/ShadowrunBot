@@ -178,6 +178,7 @@ export const srinitialize = async (interaction: CommandInteraction<CacheType>): 
 				diamondMax: 2299,
 				obsidianMin: 2300,
 				obsidianMax: 3500,
+				mapSelectionMethod: 1
 			}).save();
 			await interaction.reply({
 				content: `Ranked Category was created. Ranked emojis were created. Ranked roles were created.`,

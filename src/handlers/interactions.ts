@@ -21,6 +21,29 @@ export function interactionsHandler(client: Client) {
                     await interaction.respond(choices);
 
                 }
+
+                if (focusedOption.name == 'map_pool') {
+                    const input = focusedOption.value;
+
+                    const choices = ["A", "B"]
+                    const filtered = choices.filter((choice) => choice);
+                    await interaction.respond(filtered.map((choice) => ({ name: choice, value: choice })));
+
+                }
+
+                if (focusedOption.name == 'method') {
+                    const input = focusedOption.value;
+
+                    const choices = [
+                        'All Attrition Maps Have Even Chances',
+                        'Map Pools with Map Pool B for Game 3',
+                        'Attrition Maps 1 & 3, Extraction Map 2',
+                        'Extraction has a chance of being in any spot',
+                    ];
+                    const filtered = choices.filter((choice) => choice);
+                    await interaction.respond(filtered.map((choice, i) => ({ name: choice, value: String(i + 1) })));
+
+                }
             } catch (error) {
                 console.log(error);
                 return;

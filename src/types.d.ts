@@ -147,7 +147,8 @@ export interface IMap extends mongoose.Document {
     name: string,
     gameType: string,
     uniqueId: number,
-    mapPool: string
+    mapPool: string,
+    selectable: boolean
 }
 
 export interface IGuild extends mongoose.Document {
@@ -180,7 +181,8 @@ export interface IGuild extends mongoose.Document {
     diamondMin: number,
     diamondMax: number,
     obsidianMin: number,
-    obsidianMax: number
+    obsidianMax: number,
+    mapSelectionMethod: number
 }
 
 export interface IQueuePlayerBan extends mongoose.Document {

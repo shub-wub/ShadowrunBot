@@ -8,7 +8,8 @@ const queuePlayerSchema = new Schema<IQueuePlayer>({
     queuePosition: Number,
     queueTime: Date,
     team: Number,
-    ready: Boolean
+    ready: Boolean,
+    notified: { type: Boolean, default: false }
 });
 
 export default model("QueuePlayer", queuePlayerSchema, "queueplayers");

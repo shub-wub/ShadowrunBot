@@ -12,11 +12,13 @@ import { MongooseError } from "mongoose";
 import { generateTeams, getRankEmoji } from "#operations";
 
 export const notifyTopPlayers = async (client: Client, queuePlayers: IQueuePlayer[], queue: IQueue): Promise<void> => {
-    const top8 = queuePlayers.filter(qp => qp.queuePosition <= 8);
+    const top8 = queuePlayers.filter(qp => qp.queuePosition <= 8 && !qp.notified);
     for (const uqp of top8) {
         var user = client.users.cache.get(uqp.discordId);
         if (!user) continue;
         await user.send(`Hello, your __**${queue.rankMin}-${queue.rankMax}**__ queue match is ready! Please join the Ranked voice channel within the next 5 minutes to avoid losing your spot in this match.`).catch((e: any) => { });
+        uqp.notified = true;
+        await uqp.save();
     }
 };
 
@@ -158,6 +160,13 @@ export const launchMatch = async (interaction: ButtonInteraction, client: Client
                 var updatedQueuePlayers = await QueuePlayer.find<IQueuePlayer>().and([{ messageId: interaction.message.id }, { matchMessageId: { $exists: false } }]);
                 await updateQueuePositions(updatedQueuePlayers);
 
+                // Reset notified flags for remaining players so they get fresh
+                // notifications when the queue reaches 8 again for the next match cycle
+                await QueuePlayer.updateMany(
+                    { messageId: interaction.message.id, matchMessageId: { $exists: false } },
+                    { $set: { notified: false } }
+                );
+
                 rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueuePlayers, guild, queue as IQueue, false);
             } else {
                 await interaction.reply({
@@ -210,6 +219,15 @@ export const removeUserFromQueue = async (interaction: ButtonInteraction, client
             // Notify top 8 players if the queue still has enough for a match after removal
             if (client && updatedQueue && updatedQueue.length >= 8 && queue) {
                 await notifyTopPlayers(client, updatedQueue, queue);
+            }
+
+            // If the queue dropped below 8 after removal, reset notified flags
+            // so everyone gets a fresh notification when it reaches 8 again
+            if (updatedQueue && updatedQueue.length < 8) {
+                await QueuePlayer.updateMany(
+                    { messageId: interaction.message.id, matchMessageId: { $exists: false } },
+                    { $set: { notified: false } }
+                );
             }
 
             rebuildQueue(interaction, queueEmbed, interaction.message, updatedQueue, queryResults[1], queue as IQueue, false);
